@@ -45,4 +45,6 @@ coverage.xml
 # 忽略前端测试页面
 frontend_chat_example.html
 *.py.backup
-*.sh.backup
+*.sh.backup# 生产环境配置文件（包含敏感信息）
+.env.prod
+config/config.json

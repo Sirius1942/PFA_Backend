@@ -1,0 +1,33 @@
+[Unit]
+Description=Private Financial Analyst Backend Service
+Documentation=https://github.com/your-repo/PFA_Backend
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/root/cjscode/PFA_Backend
+ExecStart=/root/cjscode/PFA_Backend/scripts/production-daemon.sh
+ExecStop=/root/cjscode/PFA_Backend/scripts/stop-daemon.sh
+ExecReload=/bin/bash -c '/root/cjscode/PFA_Backend/scripts/stop-daemon.sh && /root/cjscode/PFA_Backend/scripts/production-daemon.sh'
+TimeoutStartSec=300
+TimeoutStopSec=120
+User=root
+Group=root
+
+# 重启策略
+Restart=on-failure
+RestartSec=10
+
+# 环境变量
+Environment=COMPOSE_HTTP_TIMEOUT=300
+Environment=DOCKER_CLIENT_TIMEOUT=300
+
+# 日志配置
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=pfa-backend
+
+[Install]
+WantedBy=multi-user.target 

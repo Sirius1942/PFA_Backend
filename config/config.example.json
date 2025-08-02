@@ -1,6 +1,6 @@
 {
   "openai": {
-    "api_key": "YOUR_OPENAI_API_KEY",
+    "api_key": "your-openai-api-key-here",
     "base_url": "https://api.openai.com/v1/",
     "model": "gpt-4",
     "temperature": 0.7,
@@ -8,16 +8,45 @@
     "timeout": 30,
     "retry_attempts": 3
   },
+  "tavily": {
+    "api_key": "your-tavily-api-key-here"
+  },
   "database": {
-    "url": "mysql+pymysql://user:password@host:port/database",
+    "url": "mysql+pymysql://financial_user:your-database-password@mysql:3306/financial_db",
     "echo": false,
     "backup_path": "./database/backup/"
   },
-  "tavily": {
-    "api_key": "YOUR_TAVILY_API_KEY"
+  "data_sources": {
+    "eastmoney": {
+      "base_url": "http://push2.eastmoney.com/api/qt/clist/get",
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Referer": "http://quote.eastmoney.com/"
+      },
+      "params": {
+        "cb": "jQuery112404953340710317169_1629360000000",
+        "pn": 1,
+        "pz": 50,
+        "po": 1,
+        "np": 1,
+        "ut": "bd1d9ddb04089700cf9c27f6f7426281",
+        "fltt": 2,
+        "invt": 2,
+        "fid": "f3",
+        "fs": "m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23",
+        "fields": "f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f12,f13,f14,f15,f16,f17,f18,f20,f21,f23,f24,f25,f22,f11,f62,f128,f136,f115,f152"
+      }
+    }
+  },
+  "stock_analysis": {
+    "technical_indicators": ["MA", "MACD", "RSI", "BOLL", "KDJ"],
+    "fundamental_metrics": ["PE", "PB", "ROE", "ROA", "EPS"],
+    "risk_metrics": ["Beta", "Sharpe", "MaxDrawdown", "Volatility"]
   },
   "logging": {
     "level": "INFO",
-    "file": "./logs/app.log"
+    "file": "./logs/quant_agent.log",
+    "max_size": "10MB",
+    "backup_count": 5
   }
 }
