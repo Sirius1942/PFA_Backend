@@ -6,7 +6,7 @@
 """
 
 import requests
-import mysql.connector
+import pymysql
 import json
 from datetime import datetime
 import sys
@@ -16,7 +16,7 @@ def test_database_connection():
     """测试数据库连接"""
     print("🔍 测试数据库连接...")
     try:
-        connection = mysql.connector.connect(
+        connection = pymysql.connect(
             host='localhost',
             port=3307,
             database='financial_db',
@@ -25,7 +25,7 @@ def test_database_connection():
         )
         
         cursor = connection.cursor()
-        cursor.execute("SELECT 1 as test, NOW() as current_time")
+        cursor.execute("SELECT 1 as test")
         result = cursor.fetchone()
         
         print(f"✅ 数据库连接成功! 测试结果: {result}")
