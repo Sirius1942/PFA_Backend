@@ -10,7 +10,7 @@ from fastapi import APIRouter
 from .auth import router as auth_router
 from .users import router as users_router
 from .stocks import router as stocks_router
-# from .financial_agent import router as agent_router
+from .assistant import router as assistant_router
 # from .admin import router as admin_router
 
 # 创建主路由
@@ -35,11 +35,11 @@ api_router.include_router(
     tags=["股票数据"]
 )
 
-# api_router.include_router(
-#     agent_router,
-#     prefix="/agent",
-#     tags=["金融助手"]
-# )
+api_router.include_router(
+    assistant_router,
+    prefix="/assistant",
+    tags=["AI助手"]
+)
 
 # api_router.include_router(
 #     admin_router,

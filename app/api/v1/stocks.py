@@ -13,7 +13,7 @@ from app.auth.permissions import require_permission, Permissions
 from pydantic import BaseModel
 from decimal import Decimal
 
-router = APIRouter(prefix="/stocks", tags=["股票数据"])
+router = APIRouter(tags=["股票数据"])
 
 # Pydantic模型
 class StockInfoResponse(BaseModel):

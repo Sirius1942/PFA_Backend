@@ -1,32 +1,5 @@
-version: '3.8'
-
 services:
-  # 后端API服务
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: financial_backend
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=sqlite:///./financial_db.sqlite
-      - SECRET_KEY=your-secret-key-change-in-production
-      - ALGORITHM=HS256
-      - ACCESS_TOKEN_EXPIRE_MINUTES=30
-    volumes:
-      - ./logs:/app/logs
-      - ./financial_db.sqlite:/app/financial_db.sqlite
-    networks:
-      - financial_network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # MySQL数据库（可选配置）
+  # MySQL数据库
   mysql:
     image: mysql:8.0
     container_name: financial_mysql
@@ -42,36 +15,12 @@ services:
       - mysql_data:/var/lib/mysql
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     command: --default-authentication-plugin=mysql_native_password
-    networks:
-      - financial_network
-    profiles:
-      - mysql
-
-  # PostgreSQL数据库（可选配置）
-  postgres:
-    image: postgres:13
-    container_name: financial_postgres
-    environment:
-      POSTGRES_DB: financial_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - "5432:5432"
-    networks:
-      - financial_network
-    profiles:
-      - postgres
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 volumes:
   mysql_data:
     driver: local
-  postgres_data:
-    driver: local
-
-networks:
-  financial_network:
-    external: false
-    name: financial_network

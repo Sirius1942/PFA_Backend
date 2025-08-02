@@ -11,7 +11,7 @@ from app.auth.permissions import require_permission
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
-router = APIRouter(prefix="/users", tags=["用户管理"])
+router = APIRouter(tags=["用户管理"])
 jwt_manager = JWTManager()
 
 # Pydantic模型

@@ -11,7 +11,7 @@ from app.core.deps import get_current_user
 from app.auth.permissions import require_permission, Permissions
 from pydantic import BaseModel
 
-router = APIRouter(prefix="/assistant", tags=["AI助手"])
+router = APIRouter(tags=["AI助手"])
 
 # Pydantic模型
 class ChatMessage(BaseModel):
