@@ -1,0 +1,90 @@
+# AI助手模块测试数据
+chat_test_data:
+  valid_queries:
+    - message: "查询股票002379的基本信息"
+      expected_status: 200
+      description: "股票信息查询"
+    - message: "分析当前市场趋势"
+      expected_status: 200
+      description: "市场分析查询"
+    - message: "002379的技术指标如何"
+      expected_status: 200
+      description: "技术指标查询"
+  
+  invalid_queries:
+    - message: ""
+      expected_status: 422
+      description: "空消息"
+    - message: "xxxxxxxxxxxx"  # 超长消息模拟
+      expected_status: 422
+      description: "消息过长"
+
+stock_analysis_test_data:
+  valid_requests:
+    - stock_code: "002379"
+      analysis_type: "technical"
+      expected_status: 200
+      description: "技术分析"
+    - stock_code: "002379"
+      analysis_type: "fundamental"
+      expected_status: 200
+      description: "基本面分析"
+  
+  invalid_requests:
+    - stock_code: "999999"
+      analysis_type: "technical"
+      expected_status: 404
+      description: "无效股票代码"
+    - stock_code: "002379"
+      analysis_type: "invalid"
+      expected_status: 422
+      description: "无效分析类型"
+
+market_insights_test_data:
+  valid_requests:
+    - insight_type: "daily_summary"
+      expected_status: 200
+      description: "每日市场总结"
+    - insight_type: "sector_analysis"
+      expected_status: 200
+      description: "行业分析"
+  
+  invalid_requests:
+    - insight_type: "invalid_type"
+      expected_status: 422
+      description: "无效洞察类型"
+
+conversation_history_test_data:
+  pagination:
+    - page: 1
+      size: 10
+      expected_status: 200
+      description: "获取对话历史"
+    - page: 2
+      size: 5
+      expected_status: 200
+      description: "分页获取对话历史"
+  
+  invalid_pagination:
+    - page: 0
+      size: 10
+      expected_status: 422
+      description: "无效页码"
+    - page: 1
+      size: 101
+      expected_status: 422
+      description: "页面大小超限"
+
+suggestions_test_data:
+  context_types:
+    - context: "股票分析"
+      expected_status: 200
+      description: "股票分析建议"
+    - context: "投资策略"
+      expected_status: 200
+      description: "投资策略建议"
+  
+  expected_fields:
+    - "suggestions"
+    - "timestamp"
+    - "relevance_score"

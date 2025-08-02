@@ -1,0 +1,103 @@
+# 股票模块测试数据
+stock_info_test_data:
+  valid_stock_codes:
+    - stock_code: "002379"
+      expected_status: 200
+      description: "宏创控股"
+    - stock_code: "000001"
+      expected_status: 200
+      description: "平安银行"
+  
+  invalid_stock_codes:
+    - stock_code: "999999"
+      expected_status: 404
+      description: "不存在的股票代码"
+    - stock_code: ""
+      expected_status: 422
+      description: "空股票代码"
+
+realtime_quotes_test_data:
+  single_stock:
+    - stock_code: "002379"
+      expected_status: 200
+      expected_fields:
+        - "current_price"
+        - "change_percent"
+        - "volume"
+        - "timestamp"
+  
+  batch_stocks:
+    - stock_codes: ["002379", "000001", "000002"]
+      expected_status: 200
+      description: "批量获取实时行情"
+
+kline_test_data:
+  valid_requests:
+    - stock_code: "002379"
+      period: "1d"
+      limit: 30
+      expected_status: 200
+      description: "日K线数据"
+    - stock_code: "002379"
+      period: "1h"
+      limit: 24
+      expected_status: 200
+      description: "小时K线数据"
+  
+  invalid_requests:
+    - stock_code: "999999"
+      period: "1d"
+      limit: 30
+      expected_status: 404
+      description: "无效股票代码"
+
+search_test_data:
+  valid_queries:
+    - query: "宏创"
+      expected_status: 200
+      description: "按公司名称搜索"
+    - query: "002379"
+      expected_status: 200
+      description: "按股票代码搜索"
+  
+  invalid_queries:
+    - query: ""
+      expected_status: 422
+      description: "空搜索查询"
+
+watchlist_test_data:
+  operations:
+    - action: "add"
+      stock_code: "002379"
+      expected_status: 201
+      description: "添加到关注列表"
+    - action: "remove"
+      stock_code: "002379"
+      expected_status: 204
+      description: "从关注列表移除"
+  
+  invalid_operations:
+    - action: "add"
+      stock_code: "999999"
+      expected_status: 404
+      description: "添加无效股票"
+
+market_data:
+  overview_fields:
+    - "total_market_cap"
+    - "trading_volume"
+    - "up_stocks"
+    - "down_stocks"
+    - "unchanged_stocks"
+  
+  industries:
+    - "金融"
+    - "科技"
+    - "医药"
+    - "房地产"
+  
+  markets:
+    - "上海证券交易所"
+    - "深圳证券交易所"
+    - "创业板"
+    - "科创板"

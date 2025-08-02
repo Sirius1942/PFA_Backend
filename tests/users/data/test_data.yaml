@@ -1,0 +1,104 @@
+# 用户管理模块测试数据
+user_management_test_data:
+  create_user:
+    - username: "newuser1"
+      email: "newuser1@example.com"
+      password: "password123"
+      role: "user"
+      expected_status: 201
+      description: "创建普通用户"
+    - username: "admin2"
+      email: "admin2@example.com"
+      password: "admin123"
+      role: "admin"
+      expected_status: 201
+      description: "创建管理员用户"
+  
+  invalid_create_user:
+    - username: "admin"  # 已存在
+      email: "admin@example.com"
+      password: "admin123"
+      role: "user"
+      expected_status: 400
+      description: "用户名已存在"
+    - username: "invalid"
+      email: "invalid-email"
+      password: "pass123"
+      role: "user"
+      expected_status: 422
+      description: "无效邮箱格式"
+
+user_profile_test_data:
+  valid_operations:
+    - operation: "get_profile"
+      user_id: 1
+      expected_status: 200
+      description: "获取用户资料"
+    - operation: "update_profile"
+      user_id: 1
+      data:
+        email: "updated@example.com"
+        is_active: true
+      expected_status: 200
+      description: "更新用户资料"
+  
+  invalid_operations:
+    - operation: "get_profile"
+      user_id: 999
+      expected_status: 404
+      description: "用户不存在"
+
+password_change_test_data:
+  valid_changes:
+    - old_password: "admin123"
+      new_password: "newpass123"
+      confirm_password: "newpass123"
+      expected_status: 200
+      description: "正常密码修改"
+  
+  invalid_changes:
+    - old_password: "wrong_password"
+      new_password: "newpass123"
+      confirm_password: "newpass123"
+      expected_status: 401
+      description: "旧密码错误"
+    - old_password: "admin123"
+      new_password: "newpass123"
+      confirm_password: "different_pass"
+      expected_status: 422
+      description: "确认密码不匹配"
+
+roles_test_data:
+  available_roles:
+    - "admin"
+    - "user"
+    - "viewer"
+  
+  role_permissions:
+    admin:
+      - "read"
+      - "write"
+      - "delete"
+      - "manage_users"
+    user:
+      - "read"
+      - "write"
+    viewer:
+      - "read"
+
+user_list_test_data:
+  pagination:
+    - page: 1
+      size: 10
+      expected_status: 200
+      description: "获取用户列表"
+  
+  filtering:
+    - filter_by: "role"
+      filter_value: "admin"
+      expected_status: 200
+      description: "按角色筛选"
+    - filter_by: "is_active"
+      filter_value: true
+      expected_status: 200
+      description: "按活跃状态筛选"
