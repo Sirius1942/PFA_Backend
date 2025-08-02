@@ -26,9 +26,9 @@ class AIAssistantService:
     def __init__(self):
         self.openai_api_key = settings.OPENAI_API_KEY
         self.openai_base_url = settings.OPENAI_BASE_URL
-        self.model_name = "gpt-3.5-turbo"
-        self.max_tokens = 2000
-        self.temperature = 0.7
+        self.model_name = settings.OPENAI_MODEL
+        self.max_tokens = settings.OPENAI_MAX_TOKENS
+        self.temperature = settings.OPENAI_TEMPERATURE
         
         # 对话历史存储（实际项目中应该使用数据库或Redis）
         self.conversation_history: Dict[int, List[Dict[str, Any]]] = {}
@@ -142,8 +142,11 @@ class AIAssistantService:
             full_prompt = self._build_prompt_with_context(message, context)
             
             # 生成回复
+            def _call_chain():
+                return self.chain.predict(input=full_prompt)
+            
             response = await asyncio.get_event_loop().run_in_executor(
-                None, self.chain.predict, input=full_prompt
+                None, _call_chain
             )
             
             return response

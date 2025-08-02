@@ -33,8 +33,8 @@ class TestAssistantBasic(APITestCase):
         
         if response.status_code == 200:
             response_data = response.json()
-            self.assertIn("response", response_data)
-            self.assertIsInstance(response_data["response"], str)
+            self.assertIn("message", response_data)
+            self.assertIsInstance(response_data["message"], str)
     
     def test_stock_chat(self):
         """测试股票相关对话"""
@@ -68,7 +68,8 @@ class TestAssistantBasic(APITestCase):
         
         if response.status_code == 200:
             response_data = response.json()
-            self.assertIn("analysis", response_data)
+            self.assertIn("summary", response_data)
+            self.assertIn("detailed_analysis", response_data)
     
     def test_market_insights(self):
         """测试市场洞察功能"""

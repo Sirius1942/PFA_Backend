@@ -12,7 +12,8 @@
     "api_key": "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"
   },
   "database": {
-    "path": "./database/stock_data.db",
+    "url": "mysql+pymysql://financial_user:financial123@localhost:3307/financial_db",
+    "echo": false,
     "backup_path": "./database/backup/"
   },
   "data_sources": {

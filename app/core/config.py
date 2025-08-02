@@ -5,10 +5,20 @@
 """
 
 import os
-from typing import List, Optional
-from pydantic import field_validator
+import json
+from typing import List, Optional, Dict, Any
+from pathlib import Path
+from pydantic import BaseModel, field_validator
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+
+def load_config_json() -> Dict[str, Any]:
+    """从config.json加载配置"""
+    config_path = Path(__file__).parent.parent.parent / "config" / "config.json"
+    if config_path.exists():
+        with open(config_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return {}
 
 class Settings(BaseSettings):
     """应用配置类"""
@@ -19,7 +29,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     
     # 数据库配置
-    DATABASE_URL: str = "mysql+pymysql://financial_user:financial123@localhost:3307/financial_db"
+    DATABASE_URL: str
     DATABASE_ECHO: bool = False
     
     # Redis配置
@@ -41,6 +51,9 @@ class Settings(BaseSettings):
     # 外部API配置
     OPENAI_API_KEY: Optional[str] = None
     OPENAI_BASE_URL: Optional[str] = None
+    OPENAI_MODEL: str = "gpt-3.5-turbo"
+    OPENAI_TEMPERATURE: float = 0.7
+    OPENAI_MAX_TOKENS: int = 2000
     
     # 东方财富API配置
     EASTMONEY_API_BASE: str = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
@@ -55,6 +68,37 @@ class Settings(BaseSettings):
     # 文件上传配置
     UPLOAD_DIR: str = "uploads"
     MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
+    
+    def __init__(self, **kwargs):
+        # 首先从config.json加载配置
+        config_json = load_config_json()
+        
+        # 从JSON配置中提取相关值
+        if config_json:
+            # 数据库配置
+            if "database" in config_json:
+                kwargs.setdefault("DATABASE_URL", config_json["database"].get("url", "mysql+pymysql://financial_user:financial123@localhost:3307/financial_db"))
+                kwargs.setdefault("DATABASE_ECHO", config_json["database"].get("echo", False))
+            
+            # OpenAI配置
+            if "openai" in config_json:
+                openai_config = config_json["openai"]
+                kwargs.setdefault("OPENAI_API_KEY", openai_config.get("api_key"))
+                kwargs.setdefault("OPENAI_BASE_URL", openai_config.get("base_url"))
+                kwargs.setdefault("OPENAI_MODEL", openai_config.get("model", "gpt-3.5-turbo"))
+                kwargs.setdefault("OPENAI_TEMPERATURE", openai_config.get("temperature", 0.7))
+                kwargs.setdefault("OPENAI_MAX_TOKENS", openai_config.get("max_tokens", 2000))
+            
+            # 日志配置
+            if "logging" in config_json:
+                logging_config = config_json["logging"]
+                kwargs.setdefault("LOG_LEVEL", logging_config.get("level", "INFO"))
+                kwargs.setdefault("LOG_FILE", logging_config.get("file", "logs/app.log"))
+        
+        # 没有从config.json获取到数据库URL时使用默认值
+        kwargs.setdefault("DATABASE_URL", "mysql+pymysql://financial_user:financial123@localhost:3307/financial_db")
+        
+        super().__init__(**kwargs)
     
     @field_validator("ALLOWED_HOSTS", mode="before")
     @classmethod

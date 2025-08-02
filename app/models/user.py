@@ -73,6 +73,11 @@ class User(Base):
         """检查用户是否有指定权限"""
         return permission_code in self.permissions
     
+    def has_permissions(self, permission_codes: List[str]) -> bool:
+        """检查用户是否拥有所有指定权限"""
+        user_permissions = self.permissions
+        return all(perm in user_permissions for perm in permission_codes)
+    
     def has_role(self, role_name: str) -> bool:
         """检查用户是否有指定角色"""
         return any(role.name == role_name for role in self.roles)

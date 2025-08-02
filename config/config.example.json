@@ -1,0 +1,23 @@
+{
+  "openai": {
+    "api_key": "YOUR_OPENAI_API_KEY",
+    "base_url": "https://api.openai.com/v1/",
+    "model": "gpt-4",
+    "temperature": 0.7,
+    "max_tokens": 4000,
+    "timeout": 30,
+    "retry_attempts": 3
+  },
+  "database": {
+    "url": "mysql+pymysql://user:password@host:port/database",
+    "echo": false,
+    "backup_path": "./database/backup/"
+  },
+  "tavily": {
+    "api_key": "YOUR_TAVILY_API_KEY"
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "./logs/app.log"
+  }
+}
