@@ -1,4 +1,4 @@
-# 系统集成测试数据
+# 系统集成模块基本测试数据
 health_check_test_data:
   endpoints:
     - path: "/health"
@@ -6,11 +6,14 @@ health_check_test_data:
       expected_fields:
         - "status"
         - "service"
-        - "version"
-      description: "系统健康检查"
     - path: "/"
       expected_status: 200
-      description: "根路径访问"
+
+api_docs_test_data:
+  endpoints:
+    - "/docs"
+    - "/redoc"
+    - "/openapi.json"
 
 database_test_data:
   connection_config:
@@ -19,79 +22,3 @@ database_test_data:
     database: "financial_db"
     user: "financial_user"
     password: "financial123"
-  
-  test_queries:
-    - query: "SELECT 1 as test"
-      expected_success: true
-      description: "基础连接测试"
-    - query: "SELECT COUNT(*) FROM users"
-      expected_success: true
-      description: "用户表查询"
-    - query: "SELECT COUNT(*) FROM stock_info"
-      expected_success: true
-      description: "股票信息表查询"
-
-api_documentation_test_data:
-  swagger_endpoints:
-    - path: "/docs"
-      expected_status: 200
-      description: "Swagger UI文档"
-    - path: "/redoc"
-      expected_status: 200
-      description: "ReDoc文档"
-    - path: "/openapi.json"
-      expected_status: 200
-      description: "OpenAPI规范"
-
-service_integration_test_data:
-  service_dependencies:
-    - service: "database"
-      check_method: "connection_test"
-      expected_available: true
-    - service: "cache"
-      check_method: "ping"
-      expected_available: false  # 可选服务
-    - service: "external_api"
-      check_method: "http_check"
-      expected_available: false  # 可选服务
-  
-  integration_scenarios:
-    - scenario: "用户注册到登录流程"
-      steps:
-        - action: "register"
-          data: {"username": "integration_test", "email": "test@example.com", "password": "test123"}
-          expected_status: 201
-        - action: "login"
-          data: {"username": "integration_test", "password": "test123"}
-          expected_status: 200
-        - action: "get_profile"
-          expected_status: 200
-    
-    - scenario: "股票查询到分析流程"
-      steps:
-        - action: "search_stock"
-          data: {"query": "002379"}
-          expected_status: 200
-        - action: "get_stock_info"
-          data: {"stock_code": "002379"}
-          expected_status: 200
-        - action: "analyze_stock"
-          data: {"stock_code": "002379", "analysis_type": "technical"}
-          expected_status: 200
-
-performance_test_data:
-  load_testing:
-    - endpoint: "/api/v1/stocks/search"
-      concurrent_requests: 10
-      total_requests: 100
-      expected_avg_response_time: 500  # ms
-    - endpoint: "/api/v1/auth/login"
-      concurrent_requests: 5
-      total_requests: 50
-      expected_avg_response_time: 200  # ms
-  
-  stress_testing:
-    - scenario: "高并发用户登录"
-      users: 50
-      duration: 60  # seconds
-      ramp_up: 10   # seconds

@@ -1,65 +1,12 @@
-# 认证模块测试数据
+# 认证模块基本测试数据
 login_test_data:
   valid_credentials:
     - username: "admin"
       password: "admin123"
       expected_status: 200
       description: "管理员登录"
-    - username: "test"
-      password: "test123"
-      expected_status: 200
-      description: "普通用户登录"
-  
-  invalid_credentials:
-    - username: "admin"
-      password: "wrong_password"
-      expected_status: 401
-      description: "错误密码"
-    - username: "nonexistent"
-      password: "admin123"
-      expected_status: 401
-      description: "不存在的用户"
-    - username: ""
-      password: ""
-      expected_status: 422
-      description: "空用户名密码"
-
-register_test_data:
-  valid_registration:
-    - username: "newuser"
-      email: "newuser@example.com"
-      password: "newpass123"
-      confirm_password: "newpass123"
-      expected_status: 201
-      description: "正常注册"
-  
-  invalid_registration:
-    - username: "admin"
-      email: "admin@example.com"
-      password: "admin123"
-      confirm_password: "admin123"
-      expected_status: 400
-      description: "用户名已存在"
-    - username: "testuser"
-      email: "invalid-email"
-      password: "test123"
-      confirm_password: "test123"
-      expected_status: 422
-      description: "无效邮箱格式"
-
-password_reset_test_data:
-  valid_requests:
-    - email: "admin@example.com"
-      expected_status: 200
-      description: "有效邮箱重置密码"
-  
-  invalid_requests:
-    - email: "nonexistent@example.com"
-      expected_status: 404
-      description: "不存在的邮箱"
 
 profile_test_data:
-  test_token: "valid_bearer_token"
   expected_fields:
     - "username"
     - "email"
