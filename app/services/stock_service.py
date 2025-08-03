@@ -26,7 +26,17 @@ class StockDataService:
     
     async def __aenter__(self):
         """异步上下文管理器入口"""
-        self.session = aiohttp.ClientSession()
+        # 创建SSL上下文，禁用证书验证以避免网络问题
+        connector = aiohttp.TCPConnector(ssl=False)
+        timeout = aiohttp.ClientTimeout(total=30)
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        self.session = aiohttp.ClientSession(
+            connector=connector, 
+            timeout=timeout,
+            headers=headers
+        )
         return self
     
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -38,7 +48,16 @@ class StockDataService:
         """从东方财富获取股票基本信息"""
         try:
             if not self.session:
-                self.session = aiohttp.ClientSession()
+                connector = aiohttp.TCPConnector(ssl=False)
+                timeout = aiohttp.ClientTimeout(total=30)
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+                self.session = aiohttp.ClientSession(
+                    connector=connector, 
+                    timeout=timeout,
+                    headers=headers
+                )
             
             # 确定市场代码
             market_code = self._get_market_code(stock_code)
@@ -54,7 +73,7 @@ class StockDataService:
             async with self.session.get(url, params=params) as response:
                 if response.status == 200:
                     data = await response.json()
-                    if data.get("rc") == 0 and data.get("rt") == 0:
+                    if data.get("rc") == 0 and data.get("data"):
                         stock_data = data["data"]
                         
                         # 获取股票名称
@@ -88,7 +107,16 @@ class StockDataService:
         """从东方财富获取实时行情数据"""
         try:
             if not self.session:
-                self.session = aiohttp.ClientSession()
+                connector = aiohttp.TCPConnector(ssl=False)
+                timeout = aiohttp.ClientTimeout(total=30)
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+                self.session = aiohttp.ClientSession(
+                    connector=connector, 
+                    timeout=timeout,
+                    headers=headers
+                )
             
             # 确定市场代码
             market_code = self._get_market_code(stock_code)
@@ -104,14 +132,15 @@ class StockDataService:
             async with self.session.get(url, params=params) as response:
                 if response.status == 200:
                     data = await response.json()
-                    if data.get("rc") == 0 and data.get("rt") == 0:
+                    
+                    if data.get("rc") == 0 and data.get("data"):
                         quote_data = data["data"]
                         
-                        current_price = quote_data.get("f43", 0) / 100  # 当前价
-                        prev_close = quote_data.get("f60", 0) / 100      # 昨收价
-                        open_price = quote_data.get("f46", 0) / 100      # 开盘价
-                        high_price = quote_data.get("f44", 0) / 100      # 最高价
-                        low_price = quote_data.get("f45", 0) / 100       # 最低价
+                        current_price = quote_data.get("f43", 0)        # 当前价
+                        prev_close = quote_data.get("f60", 0)            # 昨收价
+                        open_price = quote_data.get("f46", 0)            # 开盘价
+                        high_price = quote_data.get("f44", 0)            # 最高价
+                        low_price = quote_data.get("f45", 0)             # 最低价
                         volume = quote_data.get("f47", 0)                # 成交量
                         turnover = quote_data.get("f48", 0)              # 成交额
                         
@@ -142,7 +171,16 @@ class StockDataService:
         """从东方财富获取K线数据"""
         try:
             if not self.session:
-                self.session = aiohttp.ClientSession()
+                connector = aiohttp.TCPConnector(ssl=False)
+                timeout = aiohttp.ClientTimeout(total=30)
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+                self.session = aiohttp.ClientSession(
+                    connector=connector, 
+                    timeout=timeout,
+                    headers=headers
+                )
             
             # 确定市场代码
             market_code = self._get_market_code(stock_code)
@@ -170,7 +208,7 @@ class StockDataService:
             async with self.session.get(url, params=params) as response:
                 if response.status == 200:
                     data = await response.json()
-                    if data.get("rc") == 0 and data.get("rt") == 0:
+                    if data.get("rc") == 0 and data.get("data"):
                         klines = data["data"]["klines"]
                         kline_data = []
                         
@@ -260,25 +298,20 @@ class StockDataService:
             stock = db.query(StockInfo).filter(StockInfo.code == stock_code).first()
             stock_name = stock.name if stock else f"股票{stock_code}"
             
-            # 计算涨跌额
-            current_price = Decimal(str(quote_data["current_price"]))
-            prev_close = Decimal(str(quote_data["prev_close"]))
-            change_amount = current_price - prev_close
-            
             # 创建新的行情记录
             quote = RealtimeQuotes(
-                stock_code=stock_code,
-                stock_name=stock_name,
-                current_price=current_price,
-                open_price=Decimal(str(quote_data["open_price"])),
-                high_price=Decimal(str(quote_data["high_price"])),
-                low_price=Decimal(str(quote_data["low_price"])),
-                prev_close=prev_close,
+                code=stock_code,
+                name=stock_name,
+                current_price=quote_data["current_price"],
+                open_price=quote_data["open_price"],
+                high_price=quote_data["high_price"],
+                low_price=quote_data["low_price"],
+                pre_close=quote_data["prev_close"],
                 volume=quote_data["volume"],
-                turnover=Decimal(str(quote_data["turnover"])),
-                change_amount=change_amount,
-                change_percent=Decimal(str(quote_data["change_percent"])),
-                timestamp=quote_data["timestamp"]
+                amount=quote_data["turnover"],
+                change_amount=quote_data["current_price"] - quote_data["prev_close"],
+                change_percent=quote_data["change_percent"],
+                quote_time=quote_data["timestamp"]
             )
             
             db.add(quote)
@@ -392,7 +425,16 @@ class StockDataService:
         """从东方财富搜索股票"""
         try:
             if not self.session:
-                self.session = aiohttp.ClientSession()
+                connector = aiohttp.TCPConnector(ssl=False)
+                timeout = aiohttp.ClientTimeout(total=30)
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+                self.session = aiohttp.ClientSession(
+                    connector=connector, 
+                    timeout=timeout,
+                    headers=headers
+                )
             
             url = f"{self.search_url}/api/suggest/get"
             params = {

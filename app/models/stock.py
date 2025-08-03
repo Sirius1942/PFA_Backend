@@ -47,9 +47,8 @@ class KlineData(Base):
     __tablename__ = "kline_data"
     
     id = Column(Integer, primary_key=True, index=True)
-    stock_code = Column(String(20), index=True, nullable=False, comment="股票代码")
-    period = Column(String(10), nullable=False, comment="K线周期")
-    timestamp = Column(DateTime, index=True, nullable=False, comment="交易时间")
+    code = Column(String(20), index=True, nullable=False, comment="股票代码")
+    date = Column(DateTime, index=True, nullable=False, comment="交易日期")
     
     # OHLCV数据
     open_price = Column(Float, nullable=False, comment="开盘价")
@@ -57,7 +56,7 @@ class KlineData(Base):
     low_price = Column(Float, nullable=False, comment="最低价")
     close_price = Column(Float, nullable=False, comment="收盘价")
     volume = Column(Float, nullable=False, comment="成交量")
-    turnover = Column(Float, nullable=False, comment="成交额")
+    amount = Column(Float, nullable=False, comment="成交额")
     
     # 涨跌信息
     change_amount = Column(Float, nullable=True, comment="涨跌额")
@@ -72,27 +71,27 @@ class KlineData(Base):
     
     # 创建复合索引
     __table_args__ = (
-        Index('idx_stock_period_time', 'stock_code', 'period', 'timestamp'),
-        Index('idx_timestamp_stock', 'timestamp', 'stock_code'),
+        Index('idx_code_date', 'code', 'date'),
+        Index('idx_date_code', 'date', 'code'),
     )
     
     def __repr__(self):
-        return f"<KlineData(stock_code='{self.stock_code}', period='{self.period}', timestamp='{self.timestamp}', close={self.close_price})>"
+        return f"<KlineData(code='{self.code}', date='{self.date}', close={self.close_price})>"
 
 class RealtimeQuotes(Base):
     """实时行情模型"""
     __tablename__ = "realtime_quotes"
     
     id = Column(Integer, primary_key=True, index=True)
-    stock_code = Column(String(20), index=True, nullable=False, comment="股票代码")
-    stock_name = Column(String(100), nullable=False, comment="股票名称")
+    code = Column(String(20), index=True, nullable=False, comment="股票代码")
+    name = Column(String(100), nullable=False, comment="股票名称")
     
     # 价格信息
     current_price = Column(Float, nullable=False, comment="当前价格")
     open_price = Column(Float, nullable=False, comment="开盘价")
     high_price = Column(Float, nullable=False, comment="最高价")
     low_price = Column(Float, nullable=False, comment="最低价")
-    prev_close = Column(Float, nullable=False, comment="昨收价")
+    pre_close = Column(Float, nullable=False, comment="昨收价")
     
     # 涨跌信息
     change_amount = Column(Float, nullable=False, comment="涨跌额")
@@ -100,7 +99,7 @@ class RealtimeQuotes(Base):
     
     # 成交信息
     volume = Column(Float, nullable=False, comment="成交量")
-    turnover = Column(Float, nullable=False, comment="成交额")
+    amount = Column(Float, nullable=False, comment="成交额")
     turnover_rate = Column(Float, nullable=True, comment="换手率")
     
     # 买卖盘信息
@@ -114,12 +113,12 @@ class RealtimeQuotes(Base):
     float_market_cap = Column(Float, nullable=True, comment="流通市值")
     
     # 时间字段
-    timestamp = Column(DateTime, nullable=False, comment="行情时间")
+    quote_time = Column(DateTime, nullable=False, comment="行情时间")
     created_at = Column(DateTime(timezone=True), server_default=func.now(), comment="创建时间")
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), comment="更新时间")
     
     def __repr__(self):
-        return f"<RealtimeQuotes(stock_code='{self.stock_code}', price={self.current_price}, change={self.change_percent}%)>"
+        return f"<RealtimeQuotes(code='{self.code}', price={self.current_price}, change={self.change_percent}%)>"
 
 class UserWatchlist(Base):
     """用户自选股模型"""
