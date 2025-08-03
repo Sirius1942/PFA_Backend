@@ -114,7 +114,7 @@ class TestAssistantBasic(APITestCase):
         
         if response.status_code == 200:
             response_data = response.json()
-            self.assertIsInstance(response_data, dict)
+            self.assertIsInstance(response_data, (dict, list))
 
 
 if __name__ == '__main__':

@@ -70,7 +70,7 @@ python test_login_api.py
 ### **✅ 数据库连接正常**
 - **MySQL容器**: 运行健康
 - **连接池**: 正常工作
-- **数据库类型**: mysql (非SQLite)
+- **数据库类型**: MySQL
 - **连接URL**: `mysql+pymysql://financial_user:financial123@localhost:3307/financial_db`
 
 ### **✅ 认证系统正常**
@@ -96,8 +96,7 @@ DATABASE_URL: str = "mysql+pymysql://financial_user:financial123@localhost:3307/
 ### **连接逻辑**
 ```python
 # app/core/database.py
-if "sqlite" in settings.DATABASE_URL:
-    # SQLite配置
+# 数据库引擎配置 (仅支持MySQL)
 else:
     # MySQL配置 (当前使用)
     engine = create_engine(

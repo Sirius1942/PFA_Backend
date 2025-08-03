@@ -10,6 +10,9 @@ from datetime import datetime
 
 from app.core.database import Base
 
+# 导入技术指标模型以确保表被创建
+from app.models.technical_indicators import TechnicalIndicators
+
 class StockInfo(Base):
     """股票基本信息模型"""
     __tablename__ = "stock_info"

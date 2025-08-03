@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Any
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_, desc, func
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
@@ -55,11 +55,15 @@ class UserService:
     
     def get_user_by_username(self, db: Session, username: str) -> Optional[User]:
         """根据用户名获取用户"""
-        return db.query(User).filter(User.username == username).first()
+        return db.query(User).options(
+            joinedload(User.roles).joinedload(Role.permissions)
+        ).filter(User.username == username).first()
     
     def get_user_by_id(self, db: Session, user_id: int) -> Optional[User]:
         """根据ID获取用户"""
-        return db.query(User).filter(User.id == user_id).first()
+        return db.query(User).options(
+            joinedload(User.roles).joinedload(Role.permissions)
+        ).filter(User.id == user_id).first()
     
     def authenticate_user(self, db: Session, username: str, password: str) -> Optional[User]:
         """用户认证"""

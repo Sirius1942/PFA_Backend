@@ -17,7 +17,7 @@ from app.schemas.auth import (
     UserRegister, UserLogin, Token, UserProfile,
     PasswordReset, PasswordResetRequest
 )
-from app.services.user_service import UserService
+from app.services.user_service import user_service
 from app.core.deps import get_current_user
 
 logger = logging.getLogger(__name__)
@@ -32,29 +32,27 @@ async def register(
 ):
     """用户注册"""
     try:
-        user_service = UserService(db)
-        
         # 检查用户名是否已存在
-        if user_service.get_user_by_username(user_data.username):
+        if user_service.get_user_by_username(db, user_data.username):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="用户名已存在"
             )
         
         # 检查邮箱是否已存在
-        if user_service.get_user_by_email(user_data.email):
+        if user_service.get_user_by_email(db, user_data.email):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="邮箱已被注册"
             )
         
         # 创建用户
-        user = user_service.create_user(user_data)
+        user = user_service.create_user(db, user_data)
         
         # 分配默认角色
-        default_role = user_service.get_role_by_name("user")
+        default_role = user_service.get_role_by_name(db, "user")
         if default_role:
-            user_service.assign_role_to_user(user.id, default_role.id)
+            user_service.assign_role_to_user(db, user.id, default_role.id)
         
         logger.info(f"用户注册成功: {user.username}")
         
@@ -80,8 +78,6 @@ async def login(
 ):
     """用户登录"""
     try:
-        user_service = UserService()
-        
         # 验证用户
         user = user_service.authenticate_user(db, form_data.username, form_data.password)
         if not user:
@@ -135,8 +131,7 @@ async def refresh_token(
         payload = jwt_manager.verify_token(refresh_token, "refresh")
         user_id = int(payload.get("sub"))
         
-        user_service = UserService(db)
-        user = user_service.get_user_by_id(user_id)
+        user = user_service.get_user_by_id(db, user_id)
         
         if not user or not user.is_active:
             raise HTTPException(
@@ -201,8 +196,7 @@ async def password_reset_request(
 ):
     """请求密码重置"""
     try:
-        user_service = UserService(db)
-        user = user_service.get_user_by_email(request.email)
+        user = user_service.get_user_by_email(db, request.email)
         
         if not user:
             # 为了安全，即使用户不存在也返回成功
@@ -234,8 +228,7 @@ async def password_reset(
         # 验证重置令牌
         user_id = password_manager.verify_password_reset_token(reset_data.token)
         
-        user_service = UserService(db)
-        user = user_service.get_user_by_id(user_id)
+        user = user_service.get_user_by_id(db, user_id)
         
         if not user:
             raise HTTPException(

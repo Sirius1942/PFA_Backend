@@ -4,7 +4,8 @@
 认证相关的数据模型
 """
 
-from typing import Optional
+from typing import Optional, List
+from datetime import datetime
 from pydantic import BaseModel, EmailStr
 
 
@@ -61,6 +62,13 @@ class User(UserBase):
 class UserProfile(UserBase):
     """用户资料模型"""
     id: int
+    full_name: Optional[str] = None
+    avatar: Optional[str] = None
+    is_verified: bool = False
+    created_at: Optional[datetime] = None
+    last_login: Optional[datetime] = None
+    roles: List[str] = []
+    permissions: List[str] = []
     
     class Config:
         from_attributes = True
