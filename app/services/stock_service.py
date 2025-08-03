@@ -337,37 +337,35 @@ class StockDataService:
                 # 检查是否已存在相同时间的数据
                 existing = db.query(KlineData).filter(
                     and_(
-                        KlineData.stock_code == stock_code,
-                        KlineData.period == period,
-                        KlineData.timestamp == kline_data["timestamp"]
+                        KlineData.code == stock_code,
+                        KlineData.date == kline_data["timestamp"].date()
                     )
                 ).first()
                 
                 if existing:
                     # 更新现有数据
-                    existing.open_price = Decimal(str(kline_data["open_price"]))
-                    existing.high_price = Decimal(str(kline_data["high_price"]))
-                    existing.low_price = Decimal(str(kline_data["low_price"]))
-                    existing.close_price = Decimal(str(kline_data["close_price"]))
+                    existing.open_price = kline_data["open_price"]
+                    existing.high_price = kline_data["high_price"]
+                    existing.low_price = kline_data["low_price"]
+                    existing.close_price = kline_data["close_price"]
                     existing.volume = kline_data["volume"]
-                    existing.turnover = Decimal(str(kline_data["turnover"]))
+                    existing.amount = kline_data["turnover"]
                 else:
                     # 创建新数据
                     open_price = Decimal(str(kline_data["open_price"]))
                     close_price = Decimal(str(kline_data["close_price"]))
                     
                     kline = KlineData(
-                        stock_code=stock_code,
-                        period=period,
-                        timestamp=kline_data["timestamp"],
+                        code=stock_code,
+                        date=kline_data["timestamp"].date(),
                         open_price=open_price,
-                        high_price=Decimal(str(kline_data["high_price"])),
-                        low_price=Decimal(str(kline_data["low_price"])),
+                        high_price=kline_data["high_price"],
+                        low_price=kline_data["low_price"],
                         close_price=close_price,
                         volume=kline_data["volume"],
-                        turnover=Decimal(str(kline_data["turnover"])),
+                        amount=kline_data["turnover"],
                         change_amount=close_price - open_price,
-                        change_percent=((close_price - open_price) / open_price * 100) if open_price > 0 else Decimal('0')
+                        change_percent=((close_price - open_price) / open_price * 100) if open_price > 0 else 0
                     )
                     db.add(kline)
                 
