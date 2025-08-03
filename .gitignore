@@ -12,8 +12,6 @@ __pycache__/
 
 # 忽略数据库文件
 *.db
-*.sqlite
-*.sqlite3
 
 # 忽略日志和上传目录
 logs/
