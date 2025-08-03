@@ -11,6 +11,7 @@ from .auth import router as auth_router
 from .users import router as users_router
 from .stocks import router as stocks_router
 from .assistant import router as assistant_router
+from .data_collection import router as data_collection_router
 # from .admin import router as admin_router
 
 # 创建主路由
@@ -39,6 +40,12 @@ api_router.include_router(
     assistant_router,
     prefix="/assistant",
     tags=["AI助手"]
+)
+
+api_router.include_router(
+    data_collection_router,
+    prefix="/data",
+    tags=["数据采集"]
 )
 
 # api_router.include_router(

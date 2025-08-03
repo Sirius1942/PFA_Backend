@@ -5,7 +5,10 @@ from datetime import datetime, timedelta
 import asyncio
 import aiohttp
 import json
+import re
+import pandas as pd
 from decimal import Decimal
+from urllib.parse import quote
 
 from app.models.stock import StockInfo, KlineData, RealtimeQuotes, UserWatchlist
 from app.core.config import settings
@@ -15,7 +18,10 @@ class StockDataService:
     """股票数据服务类"""
     
     def __init__(self):
-        self.eastmoney_base_url = settings.EASTMONEY_API_BASE
+        self.eastmoney_base_url = getattr(settings, 'EASTMONEY_BASE_URL', 'https://push2.eastmoney.com')
+        self.quote_url = getattr(settings, 'EASTMONEY_QUOTE_URL', 'https://quote.eastmoney.com')
+        self.kline_url = getattr(settings, 'EASTMONEY_KLINE_URL', 'https://push2his.eastmoney.com')
+        self.search_url = getattr(settings, 'EASTMONEY_SEARCH_URL', 'https://searchapi.eastmoney.com')
         self.session = None
     
     async def __aenter__(self):
@@ -29,78 +35,173 @@ class StockDataService:
             await self.session.close()
     
     async def fetch_stock_info(self, stock_code: str) -> Optional[Dict[str, Any]]:
-        """获取股票基本信息"""
+        """从东方财富获取股票基本信息"""
         try:
-            # 这里应该调用真实的股票API
-            # 现在返回模拟数据
-            return {
-                "code": stock_code,
-                "name": f"股票{stock_code}",
-                "market": "SH" if stock_code.startswith("6") else "SZ",
-                "industry": "科技",
-                "sector": "软件服务",
-                "listing_date": "2020-01-01",
-                "total_shares": 1000000000,
-                "market_cap": 50000000000
+            if not self.session:
+                self.session = aiohttp.ClientSession()
+            
+            # 确定市场代码
+            market_code = self._get_market_code(stock_code)
+            
+            # 东方财富股票详情API
+            url = f"{self.quote_url}/api/qt/stock/get"
+            params = {
+                "secid": f"{market_code}.{stock_code}",
+                "fltt": "2",
+                "fields": "f57,f58,f84,f85,f87,f169,f170,f116,f117,f86"
             }
+            
+            async with self.session.get(url, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    if data.get("rc") == 0 and data.get("rt") == 0:
+                        stock_data = data["data"]
+                        
+                        # 获取股票名称
+                        name_url = f"{self.search_url}/api/suggest/get"
+                        name_params = {"input": stock_code, "type": "14", "token": "D43BF722C8E33BDC906FB84D85E326E8", "count": "1"}
+                        async with self.session.get(name_url, params=name_params) as name_response:
+                            name_data = await name_response.json()
+                            stock_name = stock_code
+                            if name_data.get("QuotationCodeTable", {}).get("Data"):
+                                stock_name = name_data["QuotationCodeTable"]["Data"][0]["Name"]
+                        
+                        return {
+                            "code": stock_code,
+                            "name": stock_name,
+                            "market": "SH" if market_code == "1" else "SZ",
+                            "industry": None,  # 需要单独获取
+                            "sector": None,
+                            "listing_date": None,
+                            "total_shares": stock_data.get("f84"),  # 总股本
+                            "market_cap": stock_data.get("f116")   # 总市值
+                        }
+            
+            logger.warning(f"未能获取股票信息: {stock_code}")
+            return None
+            
         except Exception as e:
             logger.error(f"获取股票信息失败 {stock_code}: {e}")
             return None
     
     async def fetch_realtime_quote(self, stock_code: str) -> Optional[Dict[str, Any]]:
-        """获取实时行情数据"""
+        """从东方财富获取实时行情数据"""
         try:
-            # 模拟实时行情数据
-            import random
-            base_price = 10.0 + random.uniform(-2, 2)
-            change_percent = random.uniform(-5, 5)
+            if not self.session:
+                self.session = aiohttp.ClientSession()
             
-            return {
-                "stock_code": stock_code,
-                "current_price": round(base_price, 2),
-                "open_price": round(base_price * 0.98, 2),
-                "high_price": round(base_price * 1.05, 2),
-                "low_price": round(base_price * 0.95, 2),
-                "prev_close": round(base_price / (1 + change_percent/100), 2),
-                "volume": random.randint(1000000, 10000000),
-                "turnover": round(base_price * random.randint(1000000, 10000000), 2),
-                "change_percent": round(change_percent, 2),
-                "timestamp": datetime.utcnow()
+            # 确定市场代码
+            market_code = self._get_market_code(stock_code)
+            
+            # 东方财富实时行情API
+            url = f"{self.eastmoney_base_url}/api/qt/stock/get"
+            params = {
+                "secid": f"{market_code}.{stock_code}",
+                "fltt": "2",
+                "fields": "f43,f44,f45,f46,f47,f48,f49,f50,f51,f52,f57,f58,f60,f169,f170"
             }
+            
+            async with self.session.get(url, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    if data.get("rc") == 0 and data.get("rt") == 0:
+                        quote_data = data["data"]
+                        
+                        current_price = quote_data.get("f43", 0) / 100  # 当前价
+                        prev_close = quote_data.get("f60", 0) / 100      # 昨收价
+                        open_price = quote_data.get("f46", 0) / 100      # 开盘价
+                        high_price = quote_data.get("f44", 0) / 100      # 最高价
+                        low_price = quote_data.get("f45", 0) / 100       # 最低价
+                        volume = quote_data.get("f47", 0)                # 成交量
+                        turnover = quote_data.get("f48", 0)              # 成交额
+                        
+                        # 计算涨跌幅
+                        change_percent = ((current_price - prev_close) / prev_close * 100) if prev_close > 0 else 0
+                        
+                        return {
+                            "stock_code": stock_code,
+                            "current_price": round(current_price, 2),
+                            "open_price": round(open_price, 2),
+                            "high_price": round(high_price, 2),
+                            "low_price": round(low_price, 2),
+                            "prev_close": round(prev_close, 2),
+                            "volume": volume,
+                            "turnover": round(turnover, 2),
+                            "change_percent": round(change_percent, 2),
+                            "timestamp": datetime.utcnow()
+                        }
+            
+            logger.warning(f"未能获取实时行情: {stock_code}")
+            return None
+            
         except Exception as e:
             logger.error(f"获取实时行情失败 {stock_code}: {e}")
             return None
     
     async def fetch_kline_data(self, stock_code: str, period: str = "1d", count: int = 100) -> List[Dict[str, Any]]:
-        """获取K线数据"""
+        """从东方财富获取K线数据"""
         try:
-            # 模拟K线数据
-            import random
-            kline_data = []
-            base_price = 10.0
+            if not self.session:
+                self.session = aiohttp.ClientSession()
             
-            for i in range(count):
-                # 生成模拟的K线数据
-                open_price = base_price + random.uniform(-0.5, 0.5)
-                close_price = open_price + random.uniform(-1, 1)
-                high_price = max(open_price, close_price) + random.uniform(0, 0.5)
-                low_price = min(open_price, close_price) - random.uniform(0, 0.5)
-                
-                kline_data.append({
-                    "stock_code": stock_code,
-                    "period": period,
-                    "timestamp": datetime.utcnow() - timedelta(days=count-i),
-                    "open_price": round(open_price, 2),
-                    "high_price": round(high_price, 2),
-                    "low_price": round(low_price, 2),
-                    "close_price": round(close_price, 2),
-                    "volume": random.randint(100000, 1000000),
-                    "turnover": round(close_price * random.randint(100000, 1000000), 2)
-                })
-                
-                base_price = close_price
+            # 确定市场代码
+            market_code = self._get_market_code(stock_code)
             
-            return kline_data
+            # 转换周期参数
+            klt_map = {
+                "1m": "1", "5m": "5", "15m": "15", "30m": "30", "1h": "60",
+                "1d": "101", "1w": "102", "1M": "103"
+            }
+            klt = klt_map.get(period, "101")
+            
+            # 东方财富K线数据API
+            url = f"{self.kline_url}/api/qt/stock/kline/get"
+            params = {
+                "secid": f"{market_code}.{stock_code}",
+                "klt": klt,
+                "fqt": "1",  # 前复权
+                "lmt": str(count),
+                "end": "20500101",
+                "iscca": "1",
+                "fields1": "f1,f2,f3,f4,f5,f6",
+                "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"
+            }
+            
+            async with self.session.get(url, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    if data.get("rc") == 0 and data.get("rt") == 0:
+                        klines = data["data"]["klines"]
+                        kline_data = []
+                        
+                        for kline in klines:
+                            parts = kline.split(",")
+                            if len(parts) >= 11:
+                                timestamp = datetime.strptime(parts[0], "%Y-%m-%d")
+                                open_price = float(parts[1])
+                                close_price = float(parts[2])
+                                high_price = float(parts[3])
+                                low_price = float(parts[4])
+                                volume = int(parts[5])
+                                turnover = float(parts[6])
+                                
+                                kline_data.append({
+                                    "stock_code": stock_code,
+                                    "period": period,
+                                    "timestamp": timestamp,
+                                    "open_price": round(open_price, 2),
+                                    "high_price": round(high_price, 2),
+                                    "low_price": round(low_price, 2),
+                                    "close_price": round(close_price, 2),
+                                    "volume": volume,
+                                    "turnover": round(turnover, 2)
+                                })
+                        
+                        return kline_data
+            
+            logger.warning(f"未能获取K线数据: {stock_code}")
+            return []
+            
         except Exception as e:
             logger.error(f"获取K线数据失败 {stock_code}: {e}")
             return []
@@ -275,6 +376,53 @@ class StockDataService:
                 logger.error(f"批量更新任务异常: {result}")
         
         return results
+    
+    def _get_market_code(self, stock_code: str) -> str:
+        """根据股票代码获取市场代码"""
+        if stock_code.startswith(("60", "68", "11", "12", "90")):
+            return "1"  # 上海交易所
+        elif stock_code.startswith(("00", "30", "20")):
+            return "0"  # 深圳交易所
+        elif stock_code.startswith("8"):
+            return "0"  # 北交所（归类为深交所）
+        else:
+            return "1"  # 默认上海交易所
+    
+    async def search_stocks_from_api(self, keyword: str, limit: int = 20) -> List[Dict[str, Any]]:
+        """从东方财富搜索股票"""
+        try:
+            if not self.session:
+                self.session = aiohttp.ClientSession()
+            
+            url = f"{self.search_url}/api/suggest/get"
+            params = {
+                "input": keyword,
+                "type": "14",
+                "token": "D43BF722C8E33BDC906FB84D85E326E8",
+                "count": str(limit)
+            }
+            
+            async with self.session.get(url, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    stocks = []
+                    
+                    if data.get("QuotationCodeTable", {}).get("Data"):
+                        for item in data["QuotationCodeTable"]["Data"]:
+                            stocks.append({
+                                "code": item["Code"],
+                                "name": item["Name"],
+                                "market": item["MktNum"],
+                                "type": item["SecurityTypeName"]
+                            })
+                    
+                    return stocks
+            
+            return []
+            
+        except Exception as e:
+            logger.error(f"搜索股票失败 {keyword}: {e}")
+            return []
     
     def get_popular_stocks(self, db: Session, limit: int = 20) -> List[StockInfo]:
         """获取热门股票（基于自选股数量）"""

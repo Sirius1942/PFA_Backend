@@ -48,6 +48,12 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_FILE: str = "logs/app.log"
     
+    # 东方财富API配置
+    EASTMONEY_BASE_URL: str = "https://push2.eastmoney.com"
+    EASTMONEY_QUOTE_URL: str = "https://quote.eastmoney.com"
+    EASTMONEY_KLINE_URL: str = "https://push2his.eastmoney.com"
+    EASTMONEY_SEARCH_URL: str = "https://searchapi.eastmoney.com"
+    
     # 外部API配置
     OPENAI_API_KEY: Optional[str] = None
     OPENAI_BASE_URL: Optional[str] = None
