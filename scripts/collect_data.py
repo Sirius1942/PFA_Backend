@@ -37,32 +37,24 @@ class DataCollector:
     def __init__(self):
         self.session = SessionLocal
         
-    async def collect_popular_stocks(self):
-        """采集热门股票数据"""
-        logger.info("开始采集热门股票数据...")
+    async def collect_watchlist_stocks(self):
+        """采集自选股数据（调试用3只股票）"""
+        logger.info("开始采集自选股数据...")
         
-        # 定义热门股票列表
-        popular_stocks = [
-            # 上证主板
-            "600000", "600036", "600519", "600887", "601318", "601888", "600276",
-            "600809", "600900", "601166", "601012", "600030", "600048", "600104",
-            
-            # 深证主板
-            "000001", "000002", "000858", "002415", "002475", "000651", "000725",
-            "002236", "002304", "002714", "000596", "000776", "002027", "002352",
-            
-            # 创业板
-            "300059", "300122", "300750", "300760", "300003", "300015", "300033",
-            "300142", "300347", "300408", "300454", "300498", "300628", "300661"
-        ]
+        # 调试用固定3只股票
+        watchlist_stocks = ["000001", "600519", "300750"]  # 平安银行、贵州茅台、宁德时代
+        logger.info(f"调试模式：仅采集 {len(watchlist_stocks)} 只自选股")
         
         db = self.session()
         try:
+            # 确保调试自选股存在
+            debug_stocks = stock_service.get_debug_watchlist_stocks(db)
+            
             async with stock_service:
                 success_count = 0
                 failed_count = 0
                 
-                for stock_code in popular_stocks:
+                for stock_code in watchlist_stocks:
                     try:
                         logger.info(f"采集股票 {stock_code} 数据...")
                         
@@ -145,8 +137,8 @@ async def main():
     import argparse
     
     parser = argparse.ArgumentParser(description="股票数据采集脚本")
-    parser.add_argument("--mode", choices=["popular", "realtime", "custom"], 
-                       default="popular", help="采集模式")
+    parser.add_argument("--mode", choices=["watchlist", "realtime", "custom"], 
+                       default="watchlist", help="采集模式")
     parser.add_argument("--codes", nargs="+", help="自定义股票代码列表")
     
     args = parser.parse_args()
@@ -157,8 +149,8 @@ async def main():
     logger.info(f"🚀 数据采集开始 - 模式: {args.mode}")
     
     try:
-        if args.mode == "popular":
-            await collector.collect_popular_stocks()
+        if args.mode == "watchlist":
+            await collector.collect_watchlist_stocks()
         
         elif args.mode == "realtime":
             if args.codes:

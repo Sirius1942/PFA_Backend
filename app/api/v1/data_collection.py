@@ -14,7 +14,7 @@ from app.core.database import get_db
 from app.models.user import User
 from app.services.stock_service import stock_service
 from app.core.deps import get_current_user
-from app.auth.permissions import require_permission, Permissions
+from app.auth.permissions import require_permission, Permissions, require_admin
 from pydantic import BaseModel
 
 router = APIRouter(tags=["数据采集"])
@@ -31,7 +31,7 @@ class CollectionResponse(BaseModel):
     details: Dict[str, Any]
 
 @router.post("/collect/stocks", response_model=CollectionResponse)
-@require_permission(Permissions.ADMIN)
+@require_admin()
 async def collect_stock_data(
     request: CollectionRequest,
     background_tasks: BackgroundTasks,
@@ -72,7 +72,7 @@ async def collect_stock_data(
         )
 
 @router.post("/collect/realtime", response_model=CollectionResponse)
-@require_permission(Permissions.ADMIN)
+@require_admin()
 async def collect_realtime_quotes(
     stock_codes: List[str],
     background_tasks: BackgroundTasks,
@@ -125,31 +125,28 @@ async def search_stocks_external(
             detail=f"搜索股票失败: {str(e)}"
         )
 
-@router.post("/collect/update-popular")
-@require_permission(Permissions.ADMIN)
-async def update_popular_stocks(
+@router.post("/collect/update-watchlist")
+@require_admin()
+async def update_watchlist_stocks(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """更新热门股票数据"""
+    """更新自选股数据（调试模式：3只股票）"""
     try:
-        # 获取热门股票代码（这里可以根据实际需求调整）
-        popular_codes = [
-            "000001", "000002", "000858", "002415", "002475",  # 深交所
-            "600000", "600036", "600519", "600887", "601318",  # 上交所
-            "300059", "300122", "300750", "300760"             # 创业板
-        ]
+        # 获取调试用自选股代码
+        debug_codes = stock_service.get_debug_watchlist_stocks(db)
         
         background_tasks.add_task(
-            _collect_stocks_background, db, popular_codes, True, True, True
+            _collect_stocks_background, db, debug_codes, True, True, True
         )
         
         return CollectionResponse(
             status="success",
-            message=f"开始更新 {len(popular_codes)} 只热门股票数据",
+            message=f"开始更新 {len(debug_codes)} 只自选股数据（调试模式）",
             details={
-                "stock_codes": popular_codes,
+                "stock_codes": debug_codes,
+                "debug_mode": True,
                 "started_at": datetime.utcnow().isoformat()
             }
         )
@@ -157,7 +154,7 @@ async def update_popular_stocks(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"更新热门股票失败: {str(e)}"
+            detail=f"更新自选股失败: {str(e)}"
         )
 
 async def _collect_stocks_background(

@@ -509,6 +509,48 @@ class StockDataService:
             logger.error(f"搜索股票失败: {e}")
             return []
     
+    def get_user_watchlist_stocks(self, db: Session, user_id: int) -> List[str]:
+        """获取用户自选股代码列表"""
+        try:
+            watchlist = db.query(UserWatchlist).filter(
+                UserWatchlist.user_id == user_id
+            ).all()
+            
+            return [item.stock_code for item in watchlist]
+            
+        except Exception as e:
+            logger.error(f"获取用户自选股失败: {e}")
+            return []
+    
+    def get_debug_watchlist_stocks(self, db: Session) -> List[str]:
+        """获取调试用的3只自选股"""
+        # 为调试固定3只股票
+        debug_stocks = ["000001", "600519", "300750"]  # 平安银行、贵州茅台、宁德时代
+        
+        # 确保这些股票在数据库中存在自选股记录
+        for stock_code in debug_stocks:
+            existing = db.query(UserWatchlist).filter(
+                and_(
+                    UserWatchlist.user_id == 1,  # 假设admin用户ID为1
+                    UserWatchlist.stock_code == stock_code
+                )
+            ).first()
+            
+            if not existing:
+                watchlist_item = UserWatchlist(
+                    user_id=1,
+                    stock_code=stock_code
+                )
+                db.add(watchlist_item)
+        
+        try:
+            db.commit()
+        except Exception as e:
+            logger.warning(f"创建调试自选股失败: {e}")
+            db.rollback()
+        
+        return debug_stocks
+    
     def get_market_summary(self, db: Session) -> Dict[str, Any]:
         """获取市场概况"""
         try:
