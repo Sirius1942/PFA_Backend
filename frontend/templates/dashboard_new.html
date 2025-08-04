@@ -19,8 +19,26 @@
         </div>
     </div>
 
+    <!-- 加载状态和错误提示 -->
+    <div v-if="loading" class="bg-white rounded-lg shadow p-6 text-center">
+        <div class="flex items-center justify-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <span class="ml-3 text-gray-600">正在加载看板数据...</span>
+        </div>
+    </div>
+
+    <div v-if="error" class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+        <div class="flex items-center justify-center">
+            <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+            <span class="text-red-700">{{ error }}</span>
+            <button @click="refreshData" class="ml-4 px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors">
+                重试
+            </button>
+        </div>
+    </div>
+
     <!-- 统计卡片 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div v-if="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="bg-white rounded-lg shadow p-6">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -29,8 +47,8 @@
                     </div>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">总收益</p>
-                    <p class="text-2xl font-semibold text-gray-900">+12.5%</p>
+                    <p class="text-sm font-medium text-gray-500">市场概况</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ dashboardData?.market_summary?.total_stocks || 0 }}支股票</p>
                 </div>
             </div>
         </div>
@@ -39,12 +57,12 @@
             <div class="flex items-center">
                 <div class="flex-shrink-0">
                     <div class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
-                        <i class="fas fa-wallet text-blue-600"></i>
+                        <i class="fas fa-star text-blue-600"></i>
                     </div>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">投资组合价值</p>
-                    <p class="text-2xl font-semibold text-gray-900">¥125,430</p>
+                    <p class="text-sm font-medium text-gray-500">我的自选</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ watchlist?.length || 0 }}支股票</p>
                 </div>
             </div>
         </div>
@@ -53,12 +71,14 @@
             <div class="flex items-center">
                 <div class="flex-shrink-0">
                     <div class="w-8 h-8 bg-yellow-100 rounded-md flex items-center justify-center">
-                        <i class="fas fa-star text-yellow-600"></i>
+                        <i class="fas fa-arrow-up text-yellow-600"></i>
                     </div>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">关注股票</p>
-                    <p class="text-2xl font-semibold text-gray-900">18</p>
+                    <p class="text-sm font-medium text-gray-500">今日盈亏</p>
+                    <p class="text-2xl font-semibold" :class="totalChangeAmount >= 0 ? 'text-green-600' : 'text-red-600'">
+                        {{ totalChangeAmount >= 0 ? '+' : '' }}{{ totalChangeAmount.toFixed(2) }}
+                    </p>
                 </div>
             </div>
         </div>
@@ -71,15 +91,15 @@
                     </div>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">AI分析次数</p>
-                    <p class="text-2xl font-semibold text-gray-900">42</p>
+                    <p class="text-sm font-medium text-gray-500">AI建议</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ dashboardData?.market_summary?.up_count || 0 }}条建议</p>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- 主要内容区域 -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div v-if="!loading" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- 投资组合图表 -->
         <div class="lg:col-span-2 bg-white rounded-lg shadow">
             <div class="p-6">
@@ -130,19 +150,30 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        <tr v-for="stock in watchlist" :key="stock.code">
+                        <tr v-for="stock in watchlist" :key="stock.stock_code">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
-                                    <div class="text-sm font-medium text-gray-900">{{ stock.name }}</div>
-                                    <div class="text-sm text-gray-500 ml-2">{{ stock.code }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ stock.stock_name }}</div>
+                                    <div class="text-sm text-gray-500 ml-2">{{ stock.stock_code }}</div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ stock.price }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm" :class="stock.change >= 0 ? 'text-green-600' : 'text-red-600'">
-                                {{ stock.change >= 0 ? '+' : '' }}{{ stock.change }}
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">¥{{ stock.current_price?.toFixed(2) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm" :class="stock.change_amount >= 0 ? 'text-green-600' : 'text-red-600'">
+                                {{ stock.change_amount >= 0 ? '+' : '' }}{{ stock.change_amount?.toFixed(2) }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm" :class="stock.changePercent >= 0 ? 'text-green-600' : 'text-red-600'">
-                                {{ stock.changePercent >= 0 ? '+' : '' }}{{ stock.changePercent }}%
+                            <td class="px-6 py-4 whitespace-nowrap text-sm" :class="stock.change_percent >= 0 ? 'text-green-600' : 'text-red-600'">
+                                {{ stock.change_percent >= 0 ? '+' : '' }}{{ stock.change_percent?.toFixed(2) }}%
+                            </td>
+                        </tr>
+                        <tr v-if="!loading && watchlist.length === 0">
+                            <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    <i class="fas fa-star text-gray-300 text-3xl mb-2"></i>
+                                    <p class="text-sm">暂无自选股票</p>
+                                    <button @click="goToStocks" class="mt-2 text-blue-600 hover:text-blue-800 text-sm">
+                                        去添加股票
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -160,15 +191,64 @@ const { createApp } = Vue;
 createApp({
     data() {
         return {
-            watchlist: [
-                { code: '000001', name: '平安银行', price: '12.45', change: 0.23, changePercent: 1.88 },
-                { code: '000002', name: '万科A', price: '18.76', change: -0.15, changePercent: -0.79 },
-                { code: '600519', name: '贵州茅台', price: '1845.00', change: 25.00, changePercent: 1.37 },
-                { code: '000858', name: '五粮液', price: '165.30', change: -2.10, changePercent: -1.25 }
-            ]
+            watchlist: [],
+            dashboardData: null,
+            loading: true,
+            error: null
         }
     },
+    computed: {
+        totalChangeAmount() {
+            if (!this.watchlist || this.watchlist.length === 0) return 0;
+            return this.watchlist.reduce((total, stock) => total + stock.change_amount, 0);
+        }
+    },
+    async mounted() {
+        await this.loadDashboardData();
+    },
     methods: {
+        async loadDashboardData() {
+            try {
+                this.loading = true;
+                this.error = null;
+                
+                // 调用个性化看板API
+                const response = await axios.get('/api/v1/stocks/dashboard', {
+                    headers: {
+                        'Authorization': `Bearer ${this.getAccessToken()}`
+                    }
+                });
+                
+                this.dashboardData = response.data;
+                this.watchlist = response.data.watchlist_stocks || [];
+                
+            } catch (error) {
+                console.error('加载看板数据失败:', error);
+                this.error = '加载数据失败，请刷新页面重试';
+                
+                // 如果是认证错误，跳转到登录页
+                if (error.response?.status === 401) {
+                    window.location.href = '/login';
+                }
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        getAccessToken() {
+            // 从cookie或localStorage获取token
+            const cookieToken = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('access_token='))
+                ?.split('=')[1];
+            
+            return cookieToken || localStorage.getItem('access_token') || '';
+        },
+        
+        async refreshData() {
+            await this.loadDashboardData();
+        },
+        
         goToChat() {
             window.location.href = '/chat';
         },

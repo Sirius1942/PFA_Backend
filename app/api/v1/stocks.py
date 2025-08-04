@@ -72,7 +72,7 @@ class WatchlistResponse(BaseModel):
     id: int
     stock_code: str
     stock_name: str
-    added_at: datetime
+    created_at: datetime
     notes: Optional[str] = None
     
     class Config:
@@ -263,7 +263,7 @@ async def get_user_watchlist(
     """获取用户自选股列表"""
     watchlist = db.query(UserWatchlist).filter(
         UserWatchlist.user_id == current_user.id
-    ).order_by(desc(UserWatchlist.added_at)).all()
+    ).order_by(desc(UserWatchlist.created_at)).all()
     
     return watchlist
 
