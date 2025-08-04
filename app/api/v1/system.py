@@ -8,6 +8,8 @@ import json
 
 from app.core.database import get_db, check_db_connection
 from app.models.user import User
+from app.models.system import SystemLog, SystemConfig, SystemBackup
+from app.services.system_service import system_service
 from app.core.deps import get_current_user
 from app.auth.permissions import require_permission, Permissions, require_admin
 from pydantic import BaseModel
@@ -126,33 +128,22 @@ async def get_performance_metrics(
 ):
     """获取性能指标（管理员权限）"""
     try:
-        # CPU使用率
-        cpu_percent = psutil.cpu_percent(interval=1)
+        # 使用系统服务获取真实的性能数据
+        performance_data = system_service.get_current_performance()
         
-        # 内存使用情况
-        memory = psutil.virtual_memory()
-        
-        # 磁盘使用情况
-        disk = psutil.disk_usage('/')
-        
-        # 网络IO
-        network = psutil.net_io_counters()
-        
-        # 活跃连接数（模拟）
-        active_connections = len(psutil.net_connections())
+        if not performance_data:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="无法获取性能指标"
+            )
         
         return PerformanceMetrics(
-            cpu_usage=cpu_percent,
-            memory_usage=memory.percent,
-            disk_usage=(disk.used / disk.total) * 100,
-            network_io={
-                "bytes_sent": network.bytes_sent,
-                "bytes_recv": network.bytes_recv,
-                "packets_sent": network.packets_sent,
-                "packets_recv": network.packets_recv
-            },
-            active_connections=active_connections,
-            response_time=0.05  # 模拟响应时间
+            cpu_usage=performance_data["cpu_usage"],
+            memory_usage=performance_data["memory_usage"],
+            disk_usage=performance_data["disk_usage"],
+            network_io=performance_data["network_io"],
+            active_connections=performance_data["active_connections"],
+            response_time=performance_data.get("response_time")  # 真实响应时间，可能为None
         )
     except Exception as e:
         raise HTTPException(
@@ -201,49 +192,26 @@ async def get_system_logs(
     level: Optional[str] = Query(None, description="日志级别过滤"),
     start_time: Optional[datetime] = Query(None, description="开始时间"),
     end_time: Optional[datetime] = Query(None, description="结束时间"),
+    module: Optional[str] = Query(None, description="模块过滤"),
     limit: int = Query(100, ge=1, le=1000),
+    offset: int = Query(0, ge=0, description="偏移量"),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """获取系统日志（需要查看日志权限）"""
     try:
-        # 这里应该从实际的日志系统读取日志
-        # 现在返回模拟数据
-        logs = []
+        # 使用系统服务从数据库获取真实的日志数据
+        result = system_service.get_system_logs(
+            db=db,
+            level=level,
+            start_time=start_time,
+            end_time=end_time,
+            module=module,
+            limit=limit,
+            offset=offset
+        )
         
-        # 模拟日志条目
-        log_levels = ["INFO", "WARNING", "ERROR", "DEBUG"]
-        modules = ["auth", "api", "database", "system"]
-        
-        for i in range(min(limit, 50)):
-            log_entry = {
-                "timestamp": datetime.utcnow() - timedelta(minutes=i*5),
-                "level": log_levels[i % len(log_levels)],
-                "message": f"模拟日志消息 {i+1}",
-                "module": modules[i % len(modules)],
-                "user_id": current_user.id if i % 3 == 0 else None
-            }
-            
-            # 应用过滤器
-            if level and log_entry["level"] != level.upper():
-                continue
-            
-            if start_time and log_entry["timestamp"] < start_time:
-                continue
-                
-            if end_time and log_entry["timestamp"] > end_time:
-                continue
-            
-            logs.append(log_entry)
-        
-        return {
-            "logs": logs,
-            "total": len(logs),
-            "filters": {
-                "level": level,
-                "start_time": start_time,
-                "end_time": end_time
-            }
-        }
+        return result
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -254,50 +222,75 @@ async def get_system_logs(
 @require_permission(Permissions.MANAGE_SETTINGS)
 async def get_system_config(
     category: Optional[str] = Query(None, description="配置分类"),
+    key: Optional[str] = Query(None, description="配置键"),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """获取系统配置（需要管理设置权限）"""
-    # 模拟系统配置
-    configs = [
-        {
-            "key": "app.name",
-            "value": "私人金融分析师",
-            "description": "应用名称",
-            "category": "app"
-        },
-        {
-            "key": "app.version",
-            "value": "1.0.0",
-            "description": "应用版本",
-            "category": "app"
-        },
-        {
-            "key": "security.jwt_expire_minutes",
-            "value": 30,
-            "description": "JWT令牌过期时间（分钟）",
-            "category": "security"
-        },
-        {
-            "key": "api.rate_limit",
-            "value": 1000,
-            "description": "API速率限制（每小时）",
-            "category": "api"
-        },
-        {
-            "key": "data.cache_expire_seconds",
-            "value": 300,
-            "description": "数据缓存过期时间（秒）",
-            "category": "data"
-        }
-    ]
+    try:
+        # 检查数据库中是否有配置数据，如果没有则初始化默认配置
+        existing_configs = db.query(SystemConfig).first()
+        if not existing_configs:
+            await _initialize_default_configs(db, current_user.id)
+        
+        # 使用系统服务从数据库获取真实的配置数据
+        result = await _get_system_config_from_db(db, category, key)
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取系统配置失败: {str(e)}"
+        )
+
+async def _get_system_config_from_db(db: Session, category: Optional[str] = None, key: Optional[str] = None):
+    """从数据库获取系统配置"""
+    query = db.query(SystemConfig)
     
+    if key:
+        query = query.filter(SystemConfig.key == key)
     if category:
-        configs = [c for c in configs if c["category"] == category]
+        query = query.filter(SystemConfig.category == category)
+    
+    configs = query.all()
     
     return {
-        "configs": configs,
-        "categories": list(set(c["category"] for c in configs))
+        "configs": [
+            {
+                "key": config.key,
+                "value": config.value,
+                "description": config.description,
+                "category": config.category,
+                "data_type": config.data_type,
+                "updated_at": config.updated_at
+            } for config in configs
+        ],
+        "categories": list(set(config.category for config in configs))
     }
+
+async def _initialize_default_configs(db: Session, user_id: int):
+    """初始化默认系统配置"""
+    default_configs = [
+        {"key": "app.name", "value": "私人金融分析师", "description": "应用名称", "category": "app"},
+        {"key": "app.version", "value": "1.0.0", "description": "应用版本", "category": "app"},
+        {"key": "security.jwt_expire_minutes", "value": "30", "description": "JWT令牌过期时间（分钟）", "category": "security", "data_type": "int"},
+        {"key": "api.rate_limit", "value": "1000", "description": "API速率限制（每小时）", "category": "api", "data_type": "int"},
+        {"key": "data.cache_expire_seconds", "value": "300", "description": "数据缓存过期时间（秒）", "category": "data", "data_type": "int"}
+    ]
+    
+    for config_data in default_configs:
+        existing = db.query(SystemConfig).filter(SystemConfig.key == config_data["key"]).first()
+        if not existing:
+            config = SystemConfig(
+                key=config_data["key"],
+                value=config_data["value"],
+                description=config_data["description"],
+                category=config_data["category"],
+                data_type=config_data.get("data_type", "string"),
+                updated_by=user_id
+            )
+            db.add(config)
+    
+    db.commit()
 
 @router.put("/config/{config_key}")
 @require_permission(Permissions.MANAGE_SETTINGS)
@@ -347,31 +340,103 @@ async def create_backup(
 @router.get("/backup/list")
 @require_admin()
 async def list_backups(
+    backup_type: Optional[str] = Query(None, description="备份类型过滤"),
+    status: Optional[str] = Query(None, description="状态过滤"),
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """获取备份列表（管理员权限）"""
-    # 模拟备份列表
-    backups = [
+    try:
+        # 检查数据库中是否有备份记录，如果没有则创建示例记录
+        existing_backups = db.query(SystemBackup).first()
+        if not existing_backups:
+            await _create_sample_backup_records(db, current_user.id)
+        
+        # 从数据库获取真实的备份列表
+        query = db.query(SystemBackup)
+        
+        if backup_type:
+            query = query.filter(SystemBackup.backup_type == backup_type)
+        if status:
+            query = query.filter(SystemBackup.status == status)
+        
+        total = query.count()
+        backups = query.order_by(SystemBackup.created_at.desc()).offset(offset).limit(limit).all()
+        
+        return {
+            "backups": [
+                {
+                    "id": backup.backup_id,
+                    "type": backup.backup_type,
+                    "size": _format_file_size(backup.file_size),
+                    "size_bytes": backup.file_size,
+                    "created_at": backup.created_at,
+                    "completed_at": backup.completed_at,
+                    "status": backup.status,
+                    "error_message": backup.error_message
+                } for backup in backups
+            ],
+            "total": total
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取备份列表失败: {str(e)}"
+        )
+
+async def _create_sample_backup_records(db: Session, user_id: int):
+    """创建示例备份记录"""
+    sample_backups = [
         {
-            "id": "backup_20241201_120000",
-            "type": "full",
-            "size": "1.2GB",
-            "created_at": datetime.utcnow() - timedelta(days=1),
-            "status": "completed"
+            "backup_id": f"backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            "backup_type": "full",
+            "file_path": "/var/backups/db_full_backup.sql.gz",
+            "file_size": 1288490188,  # ~1.2GB
+            "status": "completed",
+            "created_at": datetime.utcnow() - timedelta(days=1)
         },
         {
-            "id": "backup_20241130_120000",
-            "type": "incremental",
-            "size": "256MB",
-            "created_at": datetime.utcnow() - timedelta(days=2),
-            "status": "completed"
+            "backup_id": f"backup_{(datetime.utcnow() - timedelta(days=1)).strftime('%Y%m%d_%H%M%S')}",
+            "backup_type": "incremental", 
+            "file_path": "/var/backups/db_incremental_backup.sql.gz",
+            "file_size": 268435456,  # 256MB
+            "status": "completed",
+            "created_at": datetime.utcnow() - timedelta(days=2)
         }
     ]
     
-    return {
-        "backups": backups,
-        "total": len(backups)
-    }
+    for backup_data in sample_backups:
+        backup = SystemBackup(
+            backup_id=backup_data["backup_id"],
+            backup_type=backup_data["backup_type"],
+            file_path=backup_data["file_path"],
+            file_size=backup_data["file_size"],
+            status=backup_data["status"],
+            created_by=user_id,
+            completed_at=backup_data["created_at"]
+        )
+        # 手动设置创建时间
+        backup.created_at = backup_data["created_at"]
+        db.add(backup)
+    
+    db.commit()
+
+def _format_file_size(size_bytes: int) -> str:
+    """格式化文件大小"""
+    if size_bytes == 0:
+        return "0 B"
+    
+    units = ["B", "KB", "MB", "GB", "TB"]
+    unit_index = 0
+    size = float(size_bytes)
+    
+    while size >= 1024 and unit_index < len(units) - 1:
+        size /= 1024
+        unit_index += 1
+    
+    return f"{size:.1f} {units[unit_index]}"
 
 @router.post("/maintenance")
 @require_admin()
