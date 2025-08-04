@@ -38,7 +38,12 @@ async def get_current_user_optional(
 @router.get("/dashboard", response_class=HTMLResponse, summary="仪表板页面")
 async def dashboard(request: Request, current_user: User = Depends(get_current_user)):
     """显示用户仪表板"""
-    return templates.TemplateResponse("dashboard.html", {"request": request, "user": current_user})
+    return templates.TemplateResponse("dashboard_new.html", {
+        "request": request, 
+        "user": current_user,
+        "page": "dashboard",
+        "title": "仪表板 - 私人金融分析师"
+    })
 
 @router.get("/login", response_class=HTMLResponse, summary="登录页面")
 async def login_page(request: Request, current_user: Optional[User] = Depends(get_current_user_optional)):
@@ -47,7 +52,7 @@ async def login_page(request: Request, current_user: Optional[User] = Depends(ge
     if current_user:
         return RedirectResponse(url="/dashboard", status_code=302)
     
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse("login_new.html", {"request": request, "page": "login"})
 
 @router.post("/login", summary="处理登录请求")
 async def handle_login(
@@ -83,19 +88,39 @@ async def logout():
 @router.get("/chat", response_class=HTMLResponse, summary="AI聊天页面")
 async def chat_page(request: Request, current_user: User = Depends(get_current_user)):
     """显示AI聊天页面"""
-    return templates.TemplateResponse("chat.html", {"request": request, "user": current_user})
+    return templates.TemplateResponse("chat.html", {
+        "request": request, 
+        "user": current_user,
+        "page": "chat",
+        "title": "AI助手 - 私人金融分析师"
+    })
 
 @router.get("/stocks", response_class=HTMLResponse, summary="股票分析页面")
 async def stocks_page(request: Request, current_user: User = Depends(get_current_user)):
     """显示股票分析页面"""
-    return templates.TemplateResponse("stocks.html", {"request": request, "user": current_user})
+    return templates.TemplateResponse("stocks.html", {
+        "request": request, 
+        "user": current_user,
+        "page": "stocks",
+        "title": "股票分析 - 私人金融分析师"
+    })
 
 @router.get("/market", response_class=HTMLResponse, summary="市场洞察页面")
 async def market_page(request: Request, current_user: User = Depends(get_current_user)):
     """显示市场洞察页面"""
-    return templates.TemplateResponse("market.html", {"request": request, "user": current_user})
+    return templates.TemplateResponse("market.html", {
+        "request": request, 
+        "user": current_user,
+        "page": "market",
+        "title": "市场洞察 - 私人金融分析师"
+    })
 
 @router.get("/profile", response_class=HTMLResponse, summary="用户资料页面")
 async def profile_page(request: Request, current_user: User = Depends(get_current_user)):
     """显示用户资料页面"""
-    return templates.TemplateResponse("profile.html", {"request": request, "user": current_user})
+    return templates.TemplateResponse("profile.html", {
+        "request": request, 
+        "user": current_user,
+        "page": "profile",
+        "title": "个人资料 - 私人金融分析师"
+    })

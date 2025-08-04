@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ title or '私人金融分析师' }}{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Vue.js 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    
+    <!-- Axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/main.css') }}">
+    
+    {% block extra_head %}{% endblock %}
+    
+    <script>
+        // Tailwind配置
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 {% block body_class %}{% endblock %}">
+    <!-- 主布局容器 -->
+    <div id="app" class="{% if page != 'login' %}flex h-screen bg-gray-100{% endif %}">
+        <!-- 侧边导航栏 -->
+        {% if page != 'login' %}
+        <nav class="w-64 bg-white shadow-lg flex-shrink-0">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-chart-line text-white text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="ml-3">
+                        <h1 class="text-lg font-semibold text-gray-900">金融分析师</h1>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="mt-6">
+                <div class="px-3">
+                    <ul class="space-y-1">
+                        <li>
+                            <a href="/dashboard" class="{% if page == 'dashboard' %}bg-blue-50 border-r-2 border-blue-500 text-blue-700{% else %}text-gray-700 hover:bg-gray-50{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                                <i class="fas fa-tachometer-alt {% if page == 'dashboard' %}text-blue-500{% else %}text-gray-400 group-hover:text-gray-500{% endif %} mr-3 flex-shrink-0 h-6 w-6"></i>
+                                仪表板
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/chat" class="{% if page == 'chat' %}bg-blue-50 border-r-2 border-blue-500 text-blue-700{% else %}text-gray-700 hover:bg-gray-50{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                                <i class="fas fa-robot {% if page == 'chat' %}text-blue-500{% else %}text-gray-400 group-hover:text-gray-500{% endif %} mr-3 flex-shrink-0 h-6 w-6"></i>
+                                AI助手
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/stocks" class="{% if page == 'stocks' %}bg-blue-50 border-r-2 border-blue-500 text-blue-700{% else %}text-gray-700 hover:bg-gray-50{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                                <i class="fas fa-chart-bar {% if page == 'stocks' %}text-blue-500{% else %}text-gray-400 group-hover:text-gray-500{% endif %} mr-3 flex-shrink-0 h-6 w-6"></i>
+                                股票分析
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/market" class="{% if page == 'market' %}bg-blue-50 border-r-2 border-blue-500 text-blue-700{% else %}text-gray-700 hover:bg-gray-50{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                                <i class="fas fa-globe {% if page == 'market' %}text-blue-500{% else %}text-gray-400 group-hover:text-gray-500{% endif %} mr-3 flex-shrink-0 h-6 w-6"></i>
+                                市场洞察
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/profile" class="{% if page == 'profile' %}bg-blue-50 border-r-2 border-blue-500 text-blue-700{% else %}text-gray-700 hover:bg-gray-50{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                                <i class="fas fa-user {% if page == 'profile' %}text-blue-500{% else %}text-gray-400 group-hover:text-gray-500{% endif %} mr-3 flex-shrink-0 h-6 w-6"></i>
+                                个人资料
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            
+            <!-- 用户信息和退出按钮 -->
+            <div class="absolute bottom-0 w-64 p-4 bg-gray-50 border-t border-gray-200">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                            <span class="text-white text-sm font-medium">{{ user.username[0].upper() if user else 'U' }}</span>
+                        </div>
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <p class="text-sm font-medium text-gray-900">{{ user.username if user else 'Guest' }}</p>
+                        <p class="text-xs text-gray-500">{{ user.email if user else '' }}</p>
+                    </div>
+                    <button @click="logout" class="ml-3 text-gray-400 hover:text-gray-500">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        {% endif %}
+        
+        <!-- 主内容区域 -->
+        <div class="{% if page != 'login' %}flex-1 overflow-hidden{% else %}w-full{% endif %}">
+            {% if page != 'login' %}
+            <!-- 顶部导航栏 -->
+            <header class="bg-white shadow-sm border-b border-gray-200">
+                <div class="px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h1 class="text-2xl font-semibold text-gray-900">{% block page_title %}{% endblock %}</h1>
+                            <p class="text-sm text-gray-500">{% block page_description %}{% endblock %}</p>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <!-- 通知按钮 -->
+                            <button class="text-gray-400 hover:text-gray-500">
+                                <i class="fas fa-bell"></i>
+                            </button>
+                            <!-- 设置按钮 -->
+                            <button class="text-gray-400 hover:text-gray-500">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- 页面内容 -->
+            <main class="flex-1 overflow-auto p-6">
+                {% block content %}{% endblock %}
+            </main>
+            {% else %}
+            <!-- 登录页面内容 -->
+            {% block content %}{% endblock %}
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+    
+    <script>
+        // 全局Vue应用配置
+        const { createApp } = Vue;
+        
+        createApp({
+            data() {
+                return {
+                    user: {{ user|tojson if user else 'null' }}
+                }
+            },
+            methods: {
+                async logout() {
+                    try {
+                        await axios.get('/logout');
+                        window.location.href = '/login';
+                    } catch (error) {
+                        console.error('登出失败:', error);
+                        // 即使登出API失败，也跳转到登录页
+                        window.location.href = '/login';
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

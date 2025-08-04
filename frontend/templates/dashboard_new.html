@@ -1,0 +1,217 @@
+{% extends "modern_base.html" %}
+
+{% block page_title %}仪表板{% endblock %}
+{% block page_description %}投资概览与实时市场数据{% endblock %}
+
+{% block content %}
+<div id="dashboardApp" class="space-y-6">
+    <!-- 欢迎卡片 -->
+    <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-2xl font-bold">欢迎回来，{{ user.username }}！</h2>
+                <p class="text-blue-100">今天是个投资的好日子</p>
+            </div>
+            <div class="text-right">
+                <p class="text-blue-100 text-sm">最后登录</p>
+                <p class="text-white font-medium">{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else '首次登录' }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center">
+                        <i class="fas fa-chart-line text-green-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">总收益</p>
+                    <p class="text-2xl font-semibold text-gray-900">+12.5%</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
+                        <i class="fas fa-wallet text-blue-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">投资组合价值</p>
+                    <p class="text-2xl font-semibold text-gray-900">¥125,430</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-yellow-100 rounded-md flex items-center justify-center">
+                        <i class="fas fa-star text-yellow-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">关注股票</p>
+                    <p class="text-2xl font-semibold text-gray-900">18</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-purple-100 rounded-md flex items-center justify-center">
+                        <i class="fas fa-robot text-purple-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">AI分析次数</p>
+                    <p class="text-2xl font-semibold text-gray-900">42</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- 投资组合图表 -->
+        <div class="lg:col-span-2 bg-white rounded-lg shadow">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">投资组合表现</h3>
+                <div class="h-64">
+                    <canvas id="portfolioChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快速操作 -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">快速操作</h3>
+                <div class="space-y-3">
+                    <button @click="goToChat" class="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-robot mr-2"></i>
+                        AI助手咨询
+                    </button>
+                    <button @click="goToStocks" class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-chart-bar mr-2"></i>
+                        股票分析
+                    </button>
+                    <button @click="goToMarket" class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-globe mr-2"></i>
+                        市场洞察
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 关注股票列表 -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">关注股票</h3>
+                <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">查看全部</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">股票</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">当前价格</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">涨跌</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">涨跌幅</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr v-for="stock in watchlist" :key="stock.code">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="text-sm font-medium text-gray-900">{{ stock.name }}</div>
+                                    <div class="text-sm text-gray-500 ml-2">{{ stock.code }}</div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ stock.price }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm" :class="stock.change >= 0 ? 'text-green-600' : 'text-red-600'">
+                                {{ stock.change >= 0 ? '+' : '' }}{{ stock.change }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm" :class="stock.changePercent >= 0 ? 'text-green-600' : 'text-red-600'">
+                                {{ stock.changePercent >= 0 ? '+' : '' }}{{ stock.changePercent }}%
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const { createApp } = Vue;
+
+createApp({
+    data() {
+        return {
+            watchlist: [
+                { code: '000001', name: '平安银行', price: '12.45', change: 0.23, changePercent: 1.88 },
+                { code: '000002', name: '万科A', price: '18.76', change: -0.15, changePercent: -0.79 },
+                { code: '600519', name: '贵州茅台', price: '1845.00', change: 25.00, changePercent: 1.37 },
+                { code: '000858', name: '五粮液', price: '165.30', change: -2.10, changePercent: -1.25 }
+            ]
+        }
+    },
+    methods: {
+        goToChat() {
+            window.location.href = '/chat';
+        },
+        goToStocks() {
+            window.location.href = '/stocks';
+        },
+        goToMarket() {
+            window.location.href = '/market';
+        },
+        initChart() {
+            const ctx = document.getElementById('portfolioChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                    datasets: [{
+                        label: '投资组合价值',
+                        data: [100000, 105000, 108000, 103000, 115000, 125430],
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return '¥' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    },
+    mounted() {
+        this.initChart();
+    }
+}).mount('#dashboardApp');
+</script>
+{% endblock %}
