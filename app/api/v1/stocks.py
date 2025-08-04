@@ -261,11 +261,28 @@ async def get_user_watchlist(
     current_user: User = Depends(get_current_user)
 ):
     """获取用户自选股列表"""
-    watchlist = db.query(UserWatchlist).filter(
+    # 联合查询获取自选股和股票信息
+    watchlist_with_names = db.query(
+        UserWatchlist,
+        StockInfo.name.label('stock_name')
+    ).outerjoin(
+        StockInfo, UserWatchlist.stock_code == StockInfo.code
+    ).filter(
         UserWatchlist.user_id == current_user.id
     ).order_by(desc(UserWatchlist.created_at)).all()
     
-    return watchlist
+    # 构造响应数据
+    result = []
+    for watchlist_item, stock_name in watchlist_with_names:
+        result.append({
+            "id": watchlist_item.id,
+            "stock_code": watchlist_item.stock_code,
+            "stock_name": stock_name or f"股票{watchlist_item.stock_code}",
+            "created_at": watchlist_item.created_at,
+            "notes": watchlist_item.notes
+        })
+    
+    return result
 
 @router.post("/watchlist", response_model=WatchlistResponse)
 @require_permission(Permissions.MANAGE_WATCHLIST)
@@ -307,7 +324,6 @@ async def add_to_watchlist(
     watchlist_item = UserWatchlist(
         user_id=current_user.id,
         stock_code=watchlist_data.stock_code,
-        stock_name=stock.name,
         notes=watchlist_data.notes
     )
     
@@ -315,7 +331,14 @@ async def add_to_watchlist(
     db.commit()
     db.refresh(watchlist_item)
     
-    return watchlist_item
+    # 返回包含股票名称的响应
+    return {
+        "id": watchlist_item.id,
+        "stock_code": watchlist_item.stock_code,
+        "stock_name": stock.name,
+        "created_at": watchlist_item.created_at,
+        "notes": watchlist_item.notes
+    }
 
 @router.put("/watchlist/{stock_code}", response_model=WatchlistResponse)
 @require_permission(Permissions.MANAGE_WATCHLIST)
@@ -345,7 +368,18 @@ async def update_watchlist_item(
     db.commit()
     db.refresh(watchlist_item)
     
-    return watchlist_item
+    # 获取股票名称
+    stock = db.query(StockInfo).filter(StockInfo.code == stock_code).first()
+    stock_name = stock.name if stock else f"股票{stock_code}"
+    
+    # 返回包含股票名称的响应
+    return {
+        "id": watchlist_item.id,
+        "stock_code": watchlist_item.stock_code,
+        "stock_name": stock_name,
+        "created_at": watchlist_item.created_at,
+        "notes": watchlist_item.notes
+    }
 
 @router.delete("/watchlist/{stock_code}")
 @require_permission(Permissions.MANAGE_WATCHLIST)
