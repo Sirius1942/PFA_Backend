@@ -2,36 +2,36 @@
 
 /* ===== CSS变量定义 ===== */
 :root {
-    /* 红黑配色方案 */
-    --color-primary: #dc2626;      /* 主红色 */
-    --color-primary-dark: #b91c1c; 
-    --color-primary-light: #f87171;
+    /* 现代蓝色配色方案 */
+    --color-primary: #2563eb;      /* 主蓝色 */
+    --color-primary-dark: #1d4ed8; 
+    --color-primary-light: #dbeafe;
     
-    --color-secondary: #000000;    /* 主黑色 */
-    --color-secondary-light: #1f1f1f;
-    --color-secondary-medium: #404040;
+    --color-secondary: #475569;    /* 中性灰 */
+    --color-secondary-light: #94a3b8;
+    --color-secondary-medium: #64748b;
     
-    /* 背景色 */
-    --color-bg-primary: #0a0a0a;   /* 深黑背景 */
-    --color-bg-secondary: #1a1a1a; /* 次级背景 */
-    --color-bg-tertiary: #2a2a2a;  /* 三级背景 */
+    /* 背景色 - 浅色系 */
+    --color-bg-primary: #ffffff;   /* 纯白背景 */
+    --color-bg-secondary: #f8fafc; /* 次级背景 */
+    --color-bg-tertiary: #f1f5f9;  /* 三级背景 */
     
     /* 文本色 */
-    --color-text-primary: #ffffff;   /* 主文本 */
-    --color-text-secondary: #d1d5db; /* 次级文本 */
-    --color-text-muted: #9ca3af;     /* 弱化文本 */
+    --color-text-primary: #1e293b;   /* 主文本 */
+    --color-text-secondary: #475569; /* 次级文本 */
+    --color-text-muted: #64748b;     /* 弱化文本 */
     
     /* 状态色 */
-    --color-success: #10b981;
-    --color-warning: #f59e0b;
-    --color-error: #ef4444;
-    --color-info: #3b82f6;
+    --color-success: #059669;
+    --color-warning: #d97706;
+    --color-error: #dc2626;
+    --color-info: #0284c7;
     
     /* 边框和分割线 */
-    --color-border: #374151;
-    --color-border-light: #4b5563;
+    --color-border: #e2e8f0;
+    --color-border-light: #cbd5e1;
     
-    /* 阴影 */
+    /* 阴影 - 适合浅色主题 */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);

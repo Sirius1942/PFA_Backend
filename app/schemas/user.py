@@ -65,6 +65,7 @@ class UserResponse(UserBase):
     last_login: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+    roles: List[str] = []  # 添加roles字段
     
     class Config:
         from_attributes = True

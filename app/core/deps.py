@@ -4,7 +4,7 @@
 依赖注入模块
 """
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
@@ -16,12 +16,25 @@ from app.models.user import User
 from app.services.user_service import user_service
 
 # OAuth2 scheme
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
+
+def get_token_from_cookie_or_header(request: Request, token: Optional[str] = Depends(oauth2_scheme)) -> Optional[str]:
+    """
+    从Cookie或Header获取token
+    """
+    # 优先从Header获取
+    if token:
+        return token
+    
+    # 从Cookie获取
+    cookie_token = request.cookies.get("access_token")
+    return cookie_token
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
+    request: Request,
+    db: Session = Depends(get_db),
+    token: Optional[str] = Depends(get_token_from_cookie_or_header)
 ) -> User:
     """
     获取当前用户
@@ -31,6 +44,9 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
+    if not token:
+        raise credentials_exception
     
     try:
         # 验证token
