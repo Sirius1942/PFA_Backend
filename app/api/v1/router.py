@@ -12,6 +12,7 @@ from .users import router as users_router
 from .stocks import router as stocks_router
 from .assistant import router as assistant_router
 from .data_collection import router as data_collection_router
+from .system import router as system_router
 from .frontend import router as frontend_router
 # from .admin import router as admin_router
 
@@ -47,6 +48,11 @@ api_router.include_router(
     data_collection_router,
     prefix="/data",
     tags=["数据采集"]
+)
+
+api_router.include_router(
+    system_router,
+    tags=["系统管理"]
 )
 
 # api_router.include_router(
