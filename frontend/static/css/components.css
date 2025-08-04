@@ -251,7 +251,7 @@
     min-height: 100vh;
     padding: 2rem;
     position: relative;
-    z-index: 2;
+    z-index: 10;
 }
 
 .login-card {
@@ -264,6 +264,8 @@
     max-width: 400px;
     box-shadow: var(--shadow-xl);
     animation: slideUp 0.8s ease-out;
+    position: relative;
+    z-index: 10;
 }
 
 @keyframes slideUp {
@@ -311,6 +313,12 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    position: relative;
+    z-index: 10;
+}
+
+.login-form * {
+    position: relative;
 }
 
 .input-group {
@@ -323,17 +331,24 @@
     position: absolute;
     left: 1rem;
     color: var(--color-text-muted);
-    z-index: 1;
+    z-index: 2;
+    pointer-events: none;
 }
 
 .input-group input {
     width: 100%;
-    padding: 0.75rem 1rem 0.75rem 3rem;
+    padding: 0.75rem 3rem 0.75rem 3rem;
     background: var(--color-bg-tertiary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     color: var(--color-text-primary);
     transition: all var(--transition-fast);
+    position: relative;
+    z-index: 1;
+    font-size: 16px; /* 防止iOS自动缩放 */
+    -webkit-appearance: none;
+    appearance: none;
+    touch-action: manipulation;
 }
 
 .input-group input:focus {
@@ -344,12 +359,31 @@
 
 .password-toggle {
     position: absolute;
-    right: 1rem;
+    right: 0.5rem;
     background: none;
     border: none;
     color: var(--color-text-muted);
     cursor: pointer;
-    z-index: 1;
+    z-index: 3;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.password-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-text-primary);
+}
+
+.password-toggle i {
+    font-size: 1rem;
+    pointer-events: none;
 }
 
 .form-options {
@@ -453,7 +487,8 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 1;
+    z-index: 0;
+    pointer-events: none;
 }
 
 .floating-shape {
@@ -462,6 +497,8 @@
     opacity: 0.1;
     border-radius: 50%;
     animation: float 6s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
 }
 
 .shape-1 {
