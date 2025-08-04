@@ -64,7 +64,7 @@ class SystemBackup(Base):
     completed_at = Column(DateTime(timezone=True), nullable=True, comment="完成时间")
     created_by = Column(Integer, nullable=False, comment="创建者ID")
     error_message = Column(Text, nullable=True, comment="错误信息")
-    metadata = Column(JSON, nullable=True, comment="备份元数据")
+    backup_metadata = Column(JSON, nullable=True, comment="备份元数据")
     
     def __repr__(self):
         return f"<SystemBackup(backup_id='{self.backup_id}', status='{self.status}')>"
