@@ -8,7 +8,6 @@ AI助手接口CLI测试脚本
 import requests
 import json
 import sys
-import argparse
 from datetime import datetime
 from typing import Optional, Dict, Any
 
@@ -138,89 +137,106 @@ class AIAssistantCLI:
         print(f"{'='*50}\n")
 
 def main():
-    parser = argparse.ArgumentParser(description="AI助手CLI测试工具")
-    parser.add_argument("--url", default="http://localhost:8000", help="API服务地址")
-    parser.add_argument("--username", default="admin", help="用户名")
-    parser.add_argument("--password", default="admin123", help="密码")
+    # 固定配置参数 - 调试用
+    BASE_URL = "http://localhost:8000"
+    USERNAME = "admin"
+    PASSWORD = "admin123"
     
-    subparsers = parser.add_subparsers(dest="command", help="可用命令")
-    
-    # 聊天命令
-    chat_parser = subparsers.add_parser("chat", help="与AI助手对话")
-    chat_parser.add_argument("message", help="聊天消息")
-    chat_parser.add_argument("--stock", help="股票代码")
-    
-    # 股票分析命令
-    stock_parser = subparsers.add_parser("stock", help="股票分析")
-    stock_parser.add_argument("code", help="股票代码")
-    stock_parser.add_argument("--type", default="comprehensive", choices=["technical", "fundamental", "comprehensive"], help="分析类型")
-    stock_parser.add_argument("--period", default="1d", help="K线周期")
-    stock_parser.add_argument("--days", type=int, default=30, help="分析天数")
-    
-    # 市场洞察命令
-    market_parser = subparsers.add_parser("market", help="市场洞察")
-    market_parser.add_argument("--market", choices=["SH", "SZ", "BJ"], help="市场")
-    market_parser.add_argument("--industry", help="行业")
-    market_parser.add_argument("--type", default="overview", choices=["overview", "trend", "hotspots"], help="洞察类型")
-    
-    # 建议命令
-    subparsers.add_parser("suggestions", help="获取智能建议")
-    
-    # 交互模式
-    subparsers.add_parser("interactive", help="交互模式")
-    
-    args = parser.parse_args()
-    
-    if not args.command:
-        parser.print_help()
-        return
+    print("🔧 AI助手CLI调试工具")
+    print(f"📡 服务地址: {BASE_URL}")
+    print(f"👤 用户: {USERNAME}")
+    print("="*50)
     
     # 创建CLI实例
-    cli = AIAssistantCLI(args.url)
+    cli = AIAssistantCLI(BASE_URL)
     
     # 登录
-    if not cli.login(args.username, args.password):
+    print("\n🔐 正在登录...")
+    if not cli.login(USERNAME, PASSWORD):
+        print("❌ 登录失败，退出程序")
         return
     
-    # 执行命令
-    if args.command == "chat":
-        response = cli.chat(args.message, stock_code=args.stock)
-        cli.print_response(response, "AI助手回复")
+    # 显示菜单
+    while True:
+        print("\n" + "="*50)
+        print("🎯 请选择测试功能:")
+        print("1. 💬 AI聊天测试")
+        print("2. 📈 股票分析测试")
+        print("3. 🌍 市场洞察测试")
+        print("4. 💡 智能建议测试")
+        print("5. 🤖 交互聊天模式")
+        print("0. 🚪 退出")
+        print("="*50)
         
-    elif args.command == "stock":
-        response = cli.analyze_stock(args.code, args.type, args.period, args.days)
-        cli.print_response(response, f"股票分析 - {args.code}")
-        
-    elif args.command == "market":
-        response = cli.get_market_insights(args.market, args.industry, args.type)
-        cli.print_response(response, "市场洞察")
-        
-    elif args.command == "suggestions":
-        response = cli.get_suggestions()
-        cli.print_response(response, "智能建议")
-        
-    elif args.command == "interactive":
-        print("🤖 进入交互模式，输入 'quit' 退出")
-        while True:
-            try:
-                message = input("\n💬 您: ").strip()
-                if message.lower() in ['quit', 'exit', '退出']:
-                    print("👋 再见!")
-                    break
-                if not message:
-                    continue
-                    
-                response = cli.chat(message)
-                if response:
-                    print(f"\n🤖 AI助手: {response.get('message', '无响应')}")
-                    if response.get('suggestions'):
-                        print(f"💡 建议: {', '.join(response['suggestions'])}")
-                        
-            except KeyboardInterrupt:
-                print("\n👋 再见!")
+        try:
+            choice = input("\n请输入选项 (0-5): ").strip()
+            
+            if choice == "0":
+                print("👋 再见!")
                 break
-            except Exception as e:
-                print(f"❌ 错误: {e}")
+                
+            elif choice == "1":
+                # AI聊天测试
+                message = input("\n💬 请输入聊天消息: ").strip()
+                if message:
+                    print("\n🔄 正在请求AI助手...")
+                    response = cli.chat(message)
+                    cli.print_response(response, "AI助手回复")
+                    
+            elif choice == "2":
+                # 股票分析测试
+                stock_code = input("\n📈 请输入股票代码 (如: 000001): ").strip()
+                if stock_code:
+                    print(f"\n🔄 正在分析股票 {stock_code}...")
+                    response = cli.analyze_stock(stock_code, "comprehensive")
+                    cli.print_response(response, f"股票分析 - {stock_code}")
+                    
+            elif choice == "3":
+                # 市场洞察测试
+                print("\n🔄 正在获取市场洞察...")
+                response = cli.get_market_insights()
+                cli.print_response(response, "市场洞察")
+                
+            elif choice == "4":
+                # 智能建议测试
+                print("\n🔄 正在获取智能建议...")
+                response = cli.get_suggestions()
+                cli.print_response(response, "智能建议")
+                
+            elif choice == "5":
+                # 交互聊天模式
+                print("\n🤖 进入交互聊天模式，输入 'quit' 或 'back' 返回菜单")
+                print("-" * 50)
+                while True:
+                    try:
+                        message = input("\n💬 您: ").strip()
+                        if message.lower() in ['quit', 'exit', '退出', 'back', '返回']:
+                            print("🔙 返回主菜单")
+                            break
+                        if not message:
+                            continue
+                            
+                        response = cli.chat(message)
+                        if response:
+                            print(f"\n🤖 AI助手: {response.get('message', '无响应')}")
+                            if response.get('suggestions'):
+                                print(f"💡 建议: {', '.join(response['suggestions'])}")
+                                
+                    except KeyboardInterrupt:
+                        print("\n🔙 返回主菜单")
+                        break
+                    except Exception as e:
+                        print(f"❌ 错误: {e}")
+                        
+            else:
+                print("❌ 无效选项，请重新选择")
+                
+        except KeyboardInterrupt:
+            print("\n👋 再见!")
+            break
+        except Exception as e:
+            print(f"❌ 程序错误: {e}")
+            continue
 
 if __name__ == "__main__":
     main()

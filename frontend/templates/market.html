@@ -1,0 +1,659 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="market-container">
+    <!-- 市场概览 -->
+    <div class="market-overview">
+        <div class="overview-grid">
+            <div class="market-index-card">
+                <div class="index-header">
+                    <h3>上证指数</h3>
+                    <span class="index-code">000001</span>
+                </div>
+                <div class="index-content">
+                    <div class="index-value">3,234.56</div>
+                    <div class="index-change positive">+15.23 (+0.47%)</div>
+                </div>
+            </div>
+            
+            <div class="market-index-card">
+                <div class="index-header">
+                    <h3>深证成指</h3>
+                    <span class="index-code">399001</span>
+                </div>
+                <div class="index-content">
+                    <div class="index-value">10,987.65</div>
+                    <div class="index-change negative">-23.45 (-0.21%)</div>
+                </div>
+            </div>
+            
+            <div class="market-index-card">
+                <div class="index-header">
+                    <h3>创业板指</h3>
+                    <span class="index-code">399006</span>
+                </div>
+                <div class="index-content">
+                    <div class="index-value">2,456.78</div>
+                    <div class="index-change positive">+8.90 (+0.36%)</div>
+                </div>
+            </div>
+            
+            <div class="market-index-card">
+                <div class="index-header">
+                    <h3>沪深300</h3>
+                    <span class="index-code">000300</span>
+                </div>
+                <div class="index-content">
+                    <div class="index-value">4,123.45</div>
+                    <div class="index-change positive">+12.34 (+0.30%)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 市场分析内容 -->
+    <div class="market-analysis-grid">
+        <!-- 左侧：热点板块 -->
+        <div class="market-section">
+            <div class="section-header">
+                <h3><i class="fas fa-fire"></i> 热点板块</h3>
+                <button class="refresh-btn" onclick="refreshHotSectors()">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div class="hot-sectors" id="hotSectors">
+                <div class="sector-item">
+                    <div class="sector-info">
+                        <span class="sector-name">新能源汽车</span>
+                        <span class="sector-stocks">123只股票</span>
+                    </div>
+                    <div class="sector-performance">
+                        <span class="sector-change positive">+3.45%</span>
+                        <span class="sector-volume">成交额: 456亿</span>
+                    </div>
+                </div>
+                
+                <div class="sector-item">
+                    <div class="sector-info">
+                        <span class="sector-name">人工智能</span>
+                        <span class="sector-stocks">89只股票</span>
+                    </div>
+                    <div class="sector-performance">
+                        <span class="sector-change positive">+2.87%</span>
+                        <span class="sector-volume">成交额: 312亿</span>
+                    </div>
+                </div>
+                
+                <div class="sector-item">
+                    <div class="sector-info">
+                        <span class="sector-name">医疗器械</span>
+                        <span class="sector-stocks">67只股票</span>
+                    </div>
+                    <div class="sector-performance">
+                        <span class="sector-change positive">+1.95%</span>
+                        <span class="sector-volume">成交额: 234亿</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：市场情绪 -->
+        <div class="market-section">
+            <div class="section-header">
+                <h3><i class="fas fa-chart-pulse"></i> 市场情绪</h3>
+            </div>
+            <div class="market-sentiment">
+                <div class="sentiment-meter">
+                    <div class="meter-header">
+                        <span>市场情绪指数</span>
+                        <span class="sentiment-value">68.5</span>
+                    </div>
+                    <div class="meter-bar">
+                        <div class="meter-fill" style="width: 68.5%;"></div>
+                    </div>
+                    <div class="meter-labels">
+                        <span>恐慌</span>
+                        <span>中性</span>
+                        <span>贪婪</span>
+                    </div>
+                </div>
+                
+                <div class="sentiment-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">涨跌比</span>
+                        <span class="stat-value positive">2.3:1</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">成交量</span>
+                        <span class="stat-value">8,562亿</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">两融余额</span>
+                        <span class="stat-value">15,234亿</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI市场洞察 -->
+    <div class="ai-insights-section">
+        <div class="section-header">
+            <h3><i class="fas fa-robot"></i> AI市场洞察</h3>
+            <button class="btn-primary" onclick="generateInsights()">
+                <i class="fas fa-magic"></i> 生成洞察
+            </button>
+        </div>
+        
+        <div class="insights-content" id="insightsContent">
+            <div class="insights-placeholder">
+                <i class="fas fa-lightbulb"></i>
+                <p>点击"生成洞察"获取AI对当前市场的深度分析</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 资金流向 -->
+    <div class="market-flows-section">
+        <div class="section-header">
+            <h3><i class="fas fa-exchange-alt"></i> 资金流向</h3>
+        </div>
+        
+        <div class="flows-grid">
+            <div class="flow-card">
+                <div class="flow-header">
+                    <h4>主力资金</h4>
+                    <span class="flow-status outflow">净流出</span>
+                </div>
+                <div class="flow-amount negative">-125.6亿</div>
+                <div class="flow-detail">
+                    <span>流入: 1,234.5亿</span>
+                    <span>流出: 1,360.1亿</span>
+                </div>
+            </div>
+            
+            <div class="flow-card">
+                <div class="flow-header">
+                    <h4>北向资金</h4>
+                    <span class="flow-status inflow">净流入</span>
+                </div>
+                <div class="flow-amount positive">+45.2亿</div>
+                <div class="flow-detail">
+                    <span>沪股通: +28.7亿</span>
+                    <span>深股通: +16.5亿</span>
+                </div>
+            </div>
+            
+            <div class="flow-card">
+                <div class="flow-header">
+                    <h4>融资融券</h4>
+                    <span class="flow-status neutral">基本平衡</span>
+                </div>
+                <div class="flow-amount neutral">+2.8亿</div>
+                <div class="flow-detail">
+                    <span>融资买入: 567.8亿</span>
+                    <span>融券卖出: 565.0亿</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadMarketData();
+    startMarketDataRefresh();
+});
+
+function refreshHotSectors() {
+    showNotification('热点板块数据已刷新', 'success');
+    // 这里可以调用API刷新数据
+}
+
+async function generateInsights() {
+    const insightsContent = document.getElementById('insightsContent');
+    
+    // 显示加载状态
+    insightsContent.innerHTML = `
+        <div class="insights-loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>AI正在分析市场数据...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await assistantAPI.getMarketInsights();
+        
+        insightsContent.innerHTML = `
+            <div class="insights-result">
+                <div class="insight-item">
+                    <div class="insight-icon">
+                        <i class="fas fa-trending-up"></i>
+                    </div>
+                    <div class="insight-content">
+                        <h4>市场趋势分析</h4>
+                        <p>${response.summary || '当前市场呈现震荡上行态势，资金面相对宽松，建议关注政策导向相关板块。'}</p>
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="insight-content">
+                        <h4>风险提示</h4>
+                        <p>需要关注外围市场波动影响，建议控制仓位，分散投资风险。</p>
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <div class="insight-content">
+                        <h4>投资机会</h4>
+                        <p>新兴产业板块存在结构性机会，建议重点关注技术创新和政策支持的行业。</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Generate insights error:', error);
+        insightsContent.innerHTML = `
+            <div class="insights-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>洞察生成失败，请稍后重试</p>
+                <button class="btn-secondary" onclick="generateInsights()">重新生成</button>
+            </div>
+        `;
+    }
+}
+
+function loadMarketData() {
+    // 这里可以加载实际的市场数据
+    console.log('Loading market data...');
+}
+
+function startMarketDataRefresh() {
+    // 每30秒刷新一次市场数据
+    setInterval(function() {
+        if (!document.hidden) {
+            loadMarketData();
+        }
+    }, 30000);
+}
+</script>
+
+<style>
+/* 市场页面特定样式 */
+.market-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.market-overview {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+}
+
+.overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.market-index-card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    transition: all var(--transition-fast);
+}
+
+.market-index-card:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+}
+
+.index-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.index-header h3 {
+    color: var(--color-text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.index-code {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}
+
+.index-value {
+    color: var(--color-text-primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.index-change {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.market-analysis-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.market-section {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.section-header h3 {
+    color: var(--color-text-primary);
+    font-size: 1.125rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-header i {
+    color: var(--color-primary);
+}
+
+.refresh-btn {
+    background: none;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.refresh-btn:hover {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+.hot-sectors {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sector-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.sector-item:hover {
+    border-color: var(--color-primary);
+}
+
+.sector-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.sector-name {
+    color: var(--color-text-primary);
+    font-weight: 500;
+}
+
+.sector-stocks {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}
+
+.sector-performance {
+    text-align: right;
+}
+
+.sector-change {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.sector-volume {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}
+
+.sentiment-meter {
+    margin-bottom: 1.5rem;
+}
+
+.meter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.sentiment-value {
+    color: var(--color-primary);
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+.meter-bar {
+    height: 8px;
+    background: var(--color-bg-primary);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.meter-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-error) 0%, var(--color-warning) 50%, var(--color-success) 100%);
+    transition: width var(--transition-normal);
+}
+
+.meter-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.sentiment-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stat-label {
+    color: var(--color-text-secondary);
+}
+
+.stat-value {
+    font-weight: 600;
+}
+
+.ai-insights-section,
+.market-flows-section {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+}
+
+.insights-placeholder,
+.insights-loading,
+.insights-error {
+    text-align: center;
+    padding: 3rem;
+    color: var(--color-text-muted);
+}
+
+.insights-placeholder i,
+.insights-loading i,
+.insights-error i {
+    font-size: 3rem;
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+}
+
+.insights-result {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.insight-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.insight-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.insight-content h4 {
+    color: var(--color-text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.insight-content p {
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+.flows-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.flow-card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+}
+
+.flow-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.flow-header h4 {
+    color: var(--color-text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.flow-status {
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+}
+
+.flow-status.inflow {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--color-success);
+}
+
+.flow-status.outflow {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--color-error);
+}
+
+.flow-status.neutral {
+    background: rgba(156, 163, 175, 0.1);
+    color: var(--color-text-muted);
+}
+
+.flow-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.flow-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+}
+
+@media (max-width: 768px) {
+    .market-analysis-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .overview-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .flows-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

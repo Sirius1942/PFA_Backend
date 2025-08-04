@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-wrapper">
+        <!-- 聊天消息区域 -->
+        <div class="chat-messages" id="chatMessages">
+            <div class="message-container assistant">
+                <div class="message-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="sender-name">AI助手</span>
+                        <span class="message-time">刚刚</span>
+                    </div>
+                    <div class="message-text">
+                        您好！我是您的专业金融AI助手。我可以帮您：<br>
+                        • 分析股票走势和基本面<br>
+                        • 提供投资建议和风险评估<br>
+                        • 解读市场动态和财经新闻<br>
+                        • 回答各种金融投资问题<br><br>
+                        请问有什么可以帮助您的吗？
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="chat-input-area">
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="messageInput" 
+                        placeholder="输入您的问题..." 
+                        rows="1"
+                        maxlength="1000"></textarea>
+                    <div class="input-actions">
+                        <button class="action-btn" onclick="clearChat()" title="清空对话">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <button class="action-btn" onclick="attachFile()" title="上传文件">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                    </div>
+                </div>
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+            
+            <!-- 快捷问题 -->
+            <div class="quick-questions">
+                <span class="quick-label">快捷问题：</span>
+                <button class="quick-btn" onclick="sendQuickMessage('帮我分析一下今天的市场走势')">
+                    市场走势分析
+                </button>
+                <button class="quick-btn" onclick="sendQuickMessage('推荐一些值得关注的股票')">
+                    股票推荐
+                </button>
+                <button class="quick-btn" onclick="sendQuickMessage('当前经济形势如何？')">
+                    经济形势
+                </button>
+                <button class="quick-btn" onclick="sendQuickMessage('如何进行风险控制？')">
+                    风险控制
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 侧边栏：股票搜索 -->
+    <div class="chat-sidebar">
+        <div class="sidebar-section">
+            <h3><i class="fas fa-search"></i> 股票快查</h3>
+            <div class="stock-search">
+                <input type="text" id="stockSearch" placeholder="输入股票代码或名称">
+                <button onclick="searchStock()"><i class="fas fa-search"></i></button>
+            </div>
+            <div id="stockInfo" class="stock-info-panel"></div>
+        </div>
+
+        <div class="sidebar-section">
+            <h3><i class="fas fa-clock"></i> 聊天历史</h3>
+            <div class="chat-history" id="chatHistory">
+                <div class="history-item">
+                    <div class="history-title">市场分析讨论</div>
+                    <div class="history-time">2小时前</div>
+                </div>
+                <div class="history-item">
+                    <div class="history-title">股票投资建议</div>
+                    <div class="history-time">昨天</div>
+                </div>
+                <div class="history-item">
+                    <div class="history-title">风险评估咨询</div>
+                    <div class="history-time">3天前</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 文件上传模态框 -->
+<div id="fileUploadModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>上传文件</h3>
+            <button class="modal-close" onclick="closeModal('fileUploadModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="file-upload-area" id="fileUploadArea">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>拖拽文件到此处或点击选择文件</p>
+                <input type="file" id="fileInput" accept=".txt,.pdf,.doc,.docx,.xls,.xlsx">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let isTyping = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const messageInput = document.getElementById('messageInput');
+    
+    // 自动调整输入框高度
+    messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+    
+    // 回车发送消息
+    messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    // 加载聊天历史
+    loadChatHistory();
+});
+
+async function sendMessage() {
+    const messageInput = document.getElementById('messageInput');
+    const message = messageInput.value.trim();
+    
+    if (!message || isTyping) return;
+    
+    // 添加用户消息
+    addMessage(message, 'user');
+    messageInput.value = '';
+    messageInput.style.height = 'auto';
+    
+    // 显示AI正在输入
+    isTyping = true;
+    showTypingIndicator();
+    
+    try {
+        const response = await apiRequest('/api/v1/assistant/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+            },
+            body: JSON.stringify({
+                message: message,
+                context: {},
+                stock_code: null
+            })
+        });
+        
+        hideTypingIndicator();
+        addMessage(response.message, 'assistant', response.suggestions);
+        
+    } catch (error) {
+        console.error('Chat error:', error);
+        hideTypingIndicator();
+        addMessage('抱歉，我现在无法回答您的问题。请稍后再试。', 'assistant');
+        showNotification('发送失败，请重试', 'error');
+    } finally {
+        isTyping = false;
+    }
+}
+
+function sendQuickMessage(message) {
+    const messageInput = document.getElementById('messageInput');
+    messageInput.value = message;
+    sendMessage();
+}
+
+function addMessage(content, sender, suggestions = null) {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message-container ${sender}`;
+    
+    const currentTime = new Date().toLocaleTimeString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    let suggestionsHtml = '';
+    if (suggestions && suggestions.length > 0) {
+        suggestionsHtml = `
+            <div class="message-suggestions">
+                <p><strong>相关建议：</strong></p>
+                <ul>
+                    ${suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+    
+    messageDiv.innerHTML = `
+        <div class="message-avatar">
+            <i class="fas fa-${sender === 'user' ? 'user' : 'robot'}"></i>
+        </div>
+        <div class="message-content">
+            <div class="message-header">
+                <span class="sender-name">${sender === 'user' ? '您' : 'AI助手'}</span>
+                <span class="message-time">${currentTime}</span>
+            </div>
+            <div class="message-text">${content}</div>
+            ${suggestionsHtml}
+        </div>
+    `;
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function showTypingIndicator() {
+    const chatMessages = document.getElementById('chatMessages');
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'message-container assistant typing-indicator';
+    typingDiv.id = 'typingIndicator';
+    
+    typingDiv.innerHTML = `
+        <div class="message-avatar">
+            <i class="fas fa-robot"></i>
+        </div>
+        <div class="message-content">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    `;
+    
+    chatMessages.appendChild(typingDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function hideTypingIndicator() {
+    const typingIndicator = document.getElementById('typingIndicator');
+    if (typingIndicator) {
+        typingIndicator.remove();
+    }
+}
+
+function clearChat() {
+    if (confirm('确定要清空对话记录吗？')) {
+        const chatMessages = document.getElementById('chatMessages');
+        // 保留欢迎消息
+        const welcomeMessage = chatMessages.querySelector('.message-container.assistant');
+        chatMessages.innerHTML = '';
+        if (welcomeMessage) {
+            chatMessages.appendChild(welcomeMessage);
+        }
+        showNotification('对话已清空', 'success');
+    }
+}
+
+function attachFile() {
+    document.getElementById('fileUploadModal').style.display = 'flex';
+}
+
+async function searchStock() {
+    const query = document.getElementById('stockSearch').value.trim();
+    if (!query) return;
+    
+    showLoading();
+    
+    try {
+        // 这里可以调用stock API
+        setTimeout(() => {
+            hideLoading();
+            const stockInfo = document.getElementById('stockInfo');
+            stockInfo.innerHTML = `
+                <div class="stock-card">
+                    <div class="stock-header">
+                        <span class="stock-code">${query}</span>
+                        <span class="stock-name">示例股票</span>
+                    </div>
+                    <div class="stock-price">
+                        <span class="price">¥12.34</span>
+                        <span class="change positive">+2.1%</span>
+                    </div>
+                    <button class="btn-primary" onclick="analyzeStock('${query}')">
+                        分析此股票
+                    </button>
+                </div>
+            `;
+        }, 1000);
+    } catch (error) {
+        hideLoading();
+        showNotification('股票查询失败', 'error');
+    }
+}
+
+function analyzeStock(stockCode) {
+    const message = `请帮我分析一下${stockCode}这只股票`;
+    const messageInput = document.getElementById('messageInput');
+    messageInput.value = message;
+    sendMessage();
+}
+
+function loadChatHistory() {
+    // 这里可以从API加载聊天历史
+    console.log('Loading chat history...');
+}
+</script>
+{% endblock %}

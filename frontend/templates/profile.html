@@ -1,0 +1,885 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-grid">
+        <!-- 左侧：用户信息卡片 -->
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <i class="fas fa-user-circle"></i>
+                    <button class="avatar-upload-btn" onclick="uploadAvatar()">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
+                <div class="profile-info">
+                    <h2 id="profileUsername">Admin</h2>
+                    <p id="profileEmail">admin@example.com</p>
+                    <span class="profile-role">系统管理员</span>
+                </div>
+            </div>
+            
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <span class="stat-label">注册时间</span>
+                    <span class="stat-value">2024-01-01</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">最后登录</span>
+                    <span class="stat-value">刚刚</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">会话数量</span>
+                    <span class="stat-value">156</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：设置表单 -->
+        <div class="settings-panel">
+            <div class="settings-tabs">
+                <button class="tab-btn active" onclick="switchTab('basic')">基本信息</button>
+                <button class="tab-btn" onclick="switchTab('security')">安全设置</button>
+                <button class="tab-btn" onclick="switchTab('preferences')">偏好设置</button>
+            </div>
+
+            <!-- 基本信息标签页 -->
+            <div id="basicTab" class="tab-content active">
+                <form class="profile-form" id="basicInfoForm">
+                    <div class="form-group">
+                        <label for="fullName">姓名</label>
+                        <input type="text" id="fullName" class="form-input" value="系统管理员">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="username">用户名</label>
+                        <input type="text" id="username" class="form-input" value="admin" readonly>
+                        <small class="form-help">用户名不可修改</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">邮箱</label>
+                        <input type="email" id="email" class="form-input" value="admin@example.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">手机号</label>
+                        <input type="tel" id="phone" class="form-input" placeholder="请输入手机号">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bio">个人简介</label>
+                        <textarea id="bio" class="form-input" rows="4" placeholder="介绍一下自己..."></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">保存更改</button>
+                        <button type="button" class="btn-secondary" onclick="resetForm('basic')">重置</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 安全设置标签页 -->
+            <div id="securityTab" class="tab-content">
+                <div class="security-section">
+                    <h3>修改密码</h3>
+                    <form class="profile-form" id="passwordForm">
+                        <div class="form-group">
+                            <label for="currentPassword">当前密码</label>
+                            <input type="password" id="currentPassword" class="form-input">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="newPassword">新密码</label>
+                            <input type="password" id="newPassword" class="form-input">
+                            <div class="password-strength" id="passwordStrength"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="confirmPassword">确认新密码</label>
+                            <input type="password" id="confirmPassword" class="form-input">
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">更新密码</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="security-section">
+                    <h3>两步验证</h3>
+                    <div class="security-option">
+                        <div class="option-info">
+                            <h4>短信验证</h4>
+                            <p>通过短信接收验证码来保护您的账户安全</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="smsAuth">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="security-option">
+                        <div class="option-info">
+                            <h4>邮箱验证</h4>
+                            <p>通过邮箱接收验证码来保护您的账户安全</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="emailAuth" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="security-section">
+                    <h3>登录历史</h3>
+                    <div class="login-history" id="loginHistory">
+                        <div class="history-item">
+                            <div class="history-info">
+                                <span class="history-device">Chrome on macOS</span>
+                                <span class="history-location">北京市</span>
+                            </div>
+                            <div class="history-time">
+                                <span>2024-08-04 14:30</span>
+                                <span class="current-session">当前会话</span>
+                            </div>
+                        </div>
+                        
+                        <div class="history-item">
+                            <div class="history-info">
+                                <span class="history-device">Safari on iPhone</span>
+                                <span class="history-location">上海市</span>
+                            </div>
+                            <div class="history-time">
+                                <span>2024-08-03 09:15</span>
+                                <button class="revoke-btn">撤销</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 偏好设置标签页 -->
+            <div id="preferencesTab" class="tab-content">
+                <div class="preferences-section">
+                    <h3>界面设置</h3>
+                    
+                    <div class="preference-item">
+                        <div class="preference-info">
+                            <h4>主题模式</h4>
+                            <p>选择您偏好的界面主题</p>
+                        </div>
+                        <select id="themeMode" class="form-input" style="width: auto;">
+                            <option value="dark">深色模式</option>
+                            <option value="light">浅色模式</option>
+                            <option value="auto">跟随系统</option>
+                        </select>
+                    </div>
+                    
+                    <div class="preference-item">
+                        <div class="preference-info">
+                            <h4>语言设置</h4>
+                            <p>选择界面显示语言</p>
+                        </div>
+                        <select id="language" class="form-input" style="width: auto;">
+                            <option value="zh-CN">简体中文</option>
+                            <option value="en-US">English</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="preferences-section">
+                    <h3>通知设置</h3>
+                    
+                    <div class="preference-item">
+                        <div class="preference-info">
+                            <h4>桌面通知</h4>
+                            <p>允许系统发送桌面通知</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="desktopNotifications" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="preference-item">
+                        <div class="preference-info">
+                            <h4>邮件通知</h4>
+                            <p>接收重要事件的邮件通知</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="emailNotifications" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="preference-item">
+                        <div class="preference-info">
+                            <h4>市场提醒</h4>
+                            <p>接收股票价格变动和市场动态提醒</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="marketAlerts" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="preferences-section">
+                    <h3>数据和隐私</h3>
+                    
+                    <div class="preference-item">
+                        <div class="preference-info">
+                            <h4>数据使用分析</h4>
+                            <p>允许收集使用数据以改善服务</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="analytics">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-primary" onclick="savePreferences()">保存设置</button>
+                        <button type="button" class="btn-secondary" onclick="resetForm('preferences')">重置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 头像上传模态框 -->
+<div id="avatarUploadModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>上传头像</h3>
+            <button class="modal-close" onclick="closeModal('avatarUploadModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="avatar-upload-area">
+                <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+                <div class="upload-preview" id="uploadPreview">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="upload-actions">
+                    <button class="btn-primary" onclick="selectAvatar()">选择图片</button>
+                    <button class="btn-secondary" onclick="uploadAvatarFile()">上传</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadUserProfile();
+    setupFormValidation();
+});
+
+// 标签页切换
+function switchTab(tabName) {
+    // 隐藏所有标签页内容
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // 移除所有标签按钮的活动状态
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // 显示指定标签页
+    document.getElementById(tabName + 'Tab').classList.add('active');
+    event.target.classList.add('active');
+}
+
+// 加载用户资料
+async function loadUserProfile() {
+    try {
+        const user = await userAPI.getCurrentUser();
+        
+        document.getElementById('profileUsername').textContent = user.username || 'User';
+        document.getElementById('profileEmail').textContent = user.email || '';
+        document.getElementById('fullName').value = user.full_name || '';
+        document.getElementById('email').value = user.email || '';
+        
+    } catch (error) {
+        console.error('Load profile error:', error);
+        showNotification('加载用户信息失败', 'error');
+    }
+}
+
+// 设置表单验证
+function setupFormValidation() {
+    // 密码强度检查
+    const newPasswordInput = document.getElementById('newPassword');
+    if (newPasswordInput) {
+        newPasswordInput.addEventListener('input', checkPasswordStrength);
+    }
+    
+    // 表单提交处理
+    const basicInfoForm = document.getElementById('basicInfoForm');
+    if (basicInfoForm) {
+        basicInfoForm.addEventListener('submit', handleBasicInfoSubmit);
+    }
+    
+    const passwordForm = document.getElementById('passwordForm');
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', handlePasswordSubmit);
+    }
+}
+
+// 检查密码强度
+function checkPasswordStrength() {
+    const password = document.getElementById('newPassword').value;
+    const strengthElement = document.getElementById('passwordStrength');
+    
+    let strength = 0;
+    let strengthText = '';
+    let strengthClass = '';
+    
+    if (password.length >= 8) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    
+    switch (strength) {
+        case 0:
+        case 1:
+            strengthText = '密码强度：弱';
+            strengthClass = 'weak';
+            break;
+        case 2:
+        case 3:
+            strengthText = '密码强度：中等';
+            strengthClass = 'medium';
+            break;
+        case 4:
+        case 5:
+            strengthText = '密码强度：强';
+            strengthClass = 'strong';
+            break;
+    }
+    
+    strengthElement.textContent = strengthText;
+    strengthElement.className = `password-strength ${strengthClass}`;
+}
+
+// 处理基本信息提交
+async function handleBasicInfoSubmit(event) {
+    event.preventDefault();
+    
+    const formData = {
+        full_name: document.getElementById('fullName').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        bio: document.getElementById('bio').value
+    };
+    
+    try {
+        await userAPI.updateProfile(formData);
+        showNotification('基本信息更新成功', 'success');
+    } catch (error) {
+        console.error('Update profile error:', error);
+        showNotification('基本信息更新失败', 'error');
+    }
+}
+
+// 处理密码修改提交
+async function handlePasswordSubmit(event) {
+    event.preventDefault();
+    
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    if (newPassword !== confirmPassword) {
+        showNotification('新密码与确认密码不匹配', 'error');
+        return;
+    }
+    
+    try {
+        // 这里应该调用密码修改API
+        showNotification('密码修改成功', 'success');
+        
+        // 清空表单
+        document.getElementById('passwordForm').reset();
+        
+    } catch (error) {
+        console.error('Change password error:', error);
+        showNotification('密码修改失败', 'error');
+    }
+}
+
+// 保存偏好设置
+function savePreferences() {
+    const preferences = {
+        theme: document.getElementById('themeMode').value,
+        language: document.getElementById('language').value,
+        desktop_notifications: document.getElementById('desktopNotifications').checked,
+        email_notifications: document.getElementById('emailNotifications').checked,
+        market_alerts: document.getElementById('marketAlerts').checked,
+        analytics: document.getElementById('analytics').checked
+    };
+    
+    // 保存到本地存储
+    localStorage.setItem('userPreferences', JSON.stringify(preferences));
+    
+    showNotification('偏好设置已保存', 'success');
+}
+
+// 重置表单
+function resetForm(formType) {
+    if (formType === 'basic') {
+        loadUserProfile();
+    } else if (formType === 'preferences') {
+        // 重置偏好设置为默认值
+        document.getElementById('themeMode').value = 'dark';
+        document.getElementById('language').value = 'zh-CN';
+        document.getElementById('desktopNotifications').checked = true;
+        document.getElementById('emailNotifications').checked = true;
+        document.getElementById('marketAlerts').checked = true;
+        document.getElementById('analytics').checked = false;
+    }
+}
+
+// 头像上传相关函数
+function uploadAvatar() {
+    openModal('avatarUploadModal');
+}
+
+function selectAvatar() {
+    document.getElementById('avatarInput').click();
+}
+
+function uploadAvatarFile() {
+    const fileInput = document.getElementById('avatarInput');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        showNotification('请先选择图片', 'error');
+        return;
+    }
+    
+    // 这里应该实现实际的上传逻辑
+    showNotification('头像上传成功', 'success');
+    closeModal('avatarUploadModal');
+}
+
+// 文件选择处理
+document.addEventListener('change', function(event) {
+    if (event.target.id === 'avatarInput') {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('uploadPreview');
+                preview.innerHTML = `<img src="${e.target.result}" alt="预览" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+});
+</script>
+
+<style>
+/* 个人资料页面样式 */
+.profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 2rem;
+}
+
+.profile-card {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    height: fit-content;
+    position: sticky;
+    top: 2rem;
+}
+
+.profile-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.profile-avatar {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 1rem;
+}
+
+.profile-avatar i {
+    font-size: 5rem;
+    color: var(--color-primary);
+}
+
+.avatar-upload-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+}
+
+.profile-info h2 {
+    color: var(--color-text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.profile-info p {
+    color: var(--color-text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.profile-role {
+    background: var(--color-primary);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.profile-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stat-label {
+    color: var(--color-text-secondary);
+}
+
+.stat-value {
+    color: var(--color-text-primary);
+    font-weight: 500;
+}
+
+.settings-panel {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.settings-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 1rem;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border-bottom: 3px solid transparent;
+}
+
+.tab-btn:hover {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+}
+
+.tab-btn.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+    background: var(--color-bg-tertiary);
+}
+
+.tab-content {
+    display: none;
+    padding: 2rem;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-help {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.security-section,
+.preferences-section {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.security-section:last-child,
+.preferences-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.security-section h3,
+.preferences-section h3 {
+    color: var(--color-text-primary);
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.password-strength {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    font-weight: 500;
+}
+
+.password-strength.weak {
+    color: var(--color-error);
+}
+
+.password-strength.medium {
+    color: var(--color-warning);
+}
+
+.password-strength.strong {
+    color: var(--color-success);
+}
+
+.security-option,
+.preference-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+}
+
+.option-info,
+.preference-info {
+    flex: 1;
+}
+
+.option-info h4,
+.preference-info h4 {
+    color: var(--color-text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.option-info p,
+.preference-info p {
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    transition: 0.4s;
+    border-radius: 12px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 2px;
+    bottom: 2px;
+    background-color: var(--color-text-muted);
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+    background-color: white;
+}
+
+.login-history {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.history-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.history-device {
+    color: var(--color-text-primary);
+    font-weight: 500;
+}
+
+.history-location {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}
+
+.history-time {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.current-session {
+    color: var(--color-success);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.revoke-btn {
+    background: none;
+    border: 1px solid var(--color-error);
+    color: var(--color-error);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.revoke-btn:hover {
+    background: var(--color-error);
+    color: white;
+}
+
+.avatar-upload-area {
+    text-align: center;
+    padding: 2rem;
+}
+
+.upload-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: var(--color-bg-tertiary);
+    border: 2px dashed var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    overflow: hidden;
+}
+
+.upload-preview i {
+    font-size: 3rem;
+    color: var(--color-text-muted);
+}
+
+.upload-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-card {
+        position: static;
+    }
+    
+    .settings-tabs {
+        flex-direction: column;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .security-option,
+    .preference-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}
+</style>
+{% endblock %}

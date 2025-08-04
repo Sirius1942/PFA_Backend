@@ -18,6 +18,7 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.security import HTTPBearer
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import uvicorn
 import logging
@@ -26,7 +27,7 @@ from pathlib import Path
 # 导入应用模块
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api.v1.router import api_router
+from app.api.v1.router import api_router, frontend_page_router
 # from app.auth.middleware import AuthMiddleware
 # from app.core.logging import setup_logging
 
@@ -81,12 +82,18 @@ app.add_middleware(
 # 认证中间件
 # app.add_middleware(AuthMiddleware)
 
+# 静态文件服务
+app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
+
 # 注册路由
 app.include_router(api_router, prefix="/api/v1")
+app.include_router(frontend_page_router)
 
-@app.get("/")
-async def root():
-    """根路径"""
+from fastapi.responses import RedirectResponse
+
+@app.get("/api")
+async def api_info():
+    """API信息"""
     return {
         "message": "私人金融分析师API",
         "version": "1.0.0",
