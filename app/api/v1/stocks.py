@@ -85,6 +85,36 @@ class WatchlistAdd(BaseModel):
 class WatchlistUpdate(BaseModel):
     notes: Optional[str] = None
 
+# 看板数据响应模型
+class DashboardStockQuote(BaseModel):
+    """看板股票行情数据"""
+    stock_code: str
+    stock_name: str
+    current_price: float
+    change_amount: float
+    change_percent: float
+    volume: int
+    amount: float
+    quote_time: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class DashboardMarketSummary(BaseModel):
+    """看板市场概览"""
+    total_stocks: int = 0
+    up_count: int = 0
+    down_count: int = 0
+    flat_count: int = 0
+    up_ratio: float = 0.0
+    
+class DashboardResponse(BaseModel):
+    """看板数据响应"""
+    user_id: int
+    watchlist_stocks: List[DashboardStockQuote]
+    market_summary: DashboardMarketSummary
+    last_updated: datetime
+
 @router.get("/search", response_model=List[StockInfoResponse])
 @require_permission(Permissions.VIEW_STOCKS)
 async def search_stocks(
@@ -401,3 +431,83 @@ async def get_market_overview(
         ],
         "total_stocks": sum(stat.count for stat in market_stats)
     }
+
+@router.get("/dashboard", response_model=DashboardResponse)
+@require_permission(Permissions.VIEW_STOCKS)
+async def get_dashboard_data(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """获取用户个性化看板数据"""
+    try:
+        # 获取用户自选股列表
+        user_watchlist = db.query(UserWatchlist).filter(
+            UserWatchlist.user_id == current_user.id
+        ).all()
+        
+        # 如果用户没有自选股，返回空的看板数据
+        if not user_watchlist:
+            return DashboardResponse(
+                user_id=current_user.id,
+                watchlist_stocks=[],
+                market_summary=DashboardMarketSummary(),
+                last_updated=datetime.utcnow()
+            )
+        
+        # 获取自选股代码列表
+        stock_codes = [item.stock_code for item in user_watchlist]
+        
+        # 获取自选股的最新实时行情
+        quotes = db.query(RealtimeQuotes).filter(
+            RealtimeQuotes.code.in_(stock_codes)
+        ).order_by(desc(RealtimeQuotes.quote_time)).all()
+        
+        # 按股票代码去重，保留最新的行情
+        latest_quotes = {}
+        for quote in quotes:
+            if quote.code not in latest_quotes:
+                latest_quotes[quote.code] = quote
+        
+        # 构造看板股票行情数据
+        dashboard_stocks = []
+        for stock_code in stock_codes:
+            quote = latest_quotes.get(stock_code)
+            if quote:
+                dashboard_stocks.append(DashboardStockQuote(
+                    stock_code=quote.code,
+                    stock_name=quote.name,
+                    current_price=float(quote.current_price),
+                    change_amount=float(quote.change_amount),
+                    change_percent=float(quote.change_percent),
+                    volume=int(quote.volume),
+                    amount=float(quote.amount),
+                    quote_time=quote.quote_time
+                ))
+        
+        # 计算市场概览（基于用户自选股）
+        total_stocks = len(dashboard_stocks)
+        up_count = sum(1 for stock in dashboard_stocks if stock.change_percent > 0)
+        down_count = sum(1 for stock in dashboard_stocks if stock.change_percent < 0)
+        flat_count = total_stocks - up_count - down_count
+        up_ratio = (up_count / total_stocks * 100) if total_stocks > 0 else 0.0
+        
+        market_summary = DashboardMarketSummary(
+            total_stocks=total_stocks,
+            up_count=up_count,
+            down_count=down_count,
+            flat_count=flat_count,
+            up_ratio=round(up_ratio, 2)
+        )
+        
+        return DashboardResponse(
+            user_id=current_user.id,
+            watchlist_stocks=dashboard_stocks,
+            market_summary=market_summary,
+            last_updated=datetime.utcnow()
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取看板数据失败: {str(e)}"
+        )

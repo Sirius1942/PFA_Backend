@@ -152,29 +152,29 @@ class Permissions:
     """权限常量类"""
     
     # 用户管理权限
-    MANAGE_USERS = "manage_users"
-    VIEW_USERS = "view_users"
+    MANAGE_USERS = "user.create"  # 更新为匹配数据库
+    VIEW_USERS = "user.view"      # 更新为匹配数据库
     
     # 股票数据权限
-    VIEW_STOCKS = "view_stocks"
-    MANAGE_STOCKS = "manage_stocks"
-    VIEW_REALTIME_DATA = "view_realtime_data"
+    VIEW_STOCKS = "stock.view"       # 更新为匹配数据库
+    MANAGE_STOCKS = "stock.manage"   # 保持一致的命名规则
+    VIEW_REALTIME_DATA = "stock.realtime"  # 更新为匹配数据库
     
     # 自选股权限
-    MANAGE_WATCHLIST = "manage_watchlist"
+    MANAGE_WATCHLIST = "stock.watchlist"  # 更新为匹配数据库
     
     # AI助手权限
-    USE_AI_ASSISTANT = "use_ai_assistant"
-    MANAGE_AI_SETTINGS = "manage_ai_settings"
+    USE_AI_ASSISTANT = "agent.chat"     # 更新为匹配数据库
+    MANAGE_AI_SETTINGS = "agent.analysis"  # 更新为匹配数据库
     
     # 系统管理权限
-    SYSTEM_ADMIN = "system_admin"
-    VIEW_LOGS = "view_logs"
-    MANAGE_SETTINGS = "manage_settings"
+    SYSTEM_ADMIN = "admin.system"    # 更新为匹配数据库
+    VIEW_LOGS = "admin.logs"         # 保持一致的命名规则
+    MANAGE_SETTINGS = "admin.settings"  # 保持一致的命名规则
     
     # 数据分析权限
-    ADVANCED_ANALYSIS = "advanced_analysis"
-    EXPORT_DATA = "export_data"
+    ADVANCED_ANALYSIS = "data.analysis"  # 保持一致的命名规则
+    EXPORT_DATA = "data.export"          # 保持一致的命名规则
 
 class Roles:
     """角色常量类"""
