@@ -61,7 +61,7 @@ async def health_check():
     """系统健康检查（公开接口）"""
     try:
         # 检查数据库连接
-        db_status = await check_db_connection()
+        db_status = check_db_connection()
         
         return {
             "status": "healthy" if db_status else "unhealthy",
@@ -87,7 +87,7 @@ async def get_system_status(
     """获取系统状态（管理员权限）"""
     try:
         # 检查各服务状态
-        db_status = await check_db_connection()
+        db_status = check_db_connection()
         
         # 获取系统性能指标
         cpu_percent = psutil.cpu_percent(interval=1)
@@ -231,10 +231,10 @@ async def get_system_config(
         # 检查数据库中是否有配置数据，如果没有则初始化默认配置
         existing_configs = db.query(SystemConfig).first()
         if not existing_configs:
-            await _initialize_default_configs(db, current_user.id)
+            _initialize_default_configs(db, current_user.id)
         
         # 使用系统服务从数据库获取真实的配置数据
-        result = await _get_system_config_from_db(db, category, key)
+        result = _get_system_config_from_db(db, category, key)
         return result
     except Exception as e:
         raise HTTPException(
@@ -242,7 +242,7 @@ async def get_system_config(
             detail=f"获取系统配置失败: {str(e)}"
         )
 
-async def _get_system_config_from_db(db: Session, category: Optional[str] = None, key: Optional[str] = None):
+def _get_system_config_from_db(db: Session, category: Optional[str] = None, key: Optional[str] = None):
     """从数据库获取系统配置"""
     query = db.query(SystemConfig)
     
@@ -267,7 +267,7 @@ async def _get_system_config_from_db(db: Session, category: Optional[str] = None
         "categories": list(set(config.category for config in configs))
     }
 
-async def _initialize_default_configs(db: Session, user_id: int):
+def _initialize_default_configs(db: Session, user_id: int):
     """初始化默认系统配置"""
     default_configs = [
         {"key": "app.name", "value": "私人金融分析师", "description": "应用名称", "category": "app"},
@@ -352,7 +352,7 @@ async def list_backups(
         # 检查数据库中是否有备份记录，如果没有则创建示例记录
         existing_backups = db.query(SystemBackup).first()
         if not existing_backups:
-            await _create_sample_backup_records(db, current_user.id)
+            _create_sample_backup_records(db, current_user.id)
         
         # 从数据库获取真实的备份列表
         query = db.query(SystemBackup)
@@ -386,7 +386,7 @@ async def list_backups(
             detail=f"获取备份列表失败: {str(e)}"
         )
 
-async def _create_sample_backup_records(db: Session, user_id: int):
+def _create_sample_backup_records(db: Session, user_id: int):
     """创建示例备份记录"""
     sample_backups = [
         {

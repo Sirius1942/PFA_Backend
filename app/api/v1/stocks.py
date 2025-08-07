@@ -122,10 +122,13 @@ async def search_stocks(
     limit: int = Query(20, ge=1, le=100),
     market: Optional[str] = Query(None, description="市场筛选（SH/SZ/BJ）"),
     industry: Optional[str] = Query(None, description="行业筛选"),
+    auto_fetch: bool = Query(True, description="是否自动从外部API获取股票数据"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """搜索股票"""
+    """股票搜索 - 优先从本地数据库搜索，如果没有结果则从外部API获取"""
+    
+    # 1. 先从本地数据库搜索
     query = db.query(StockInfo).filter(StockInfo.is_active == True)
     
     # 关键词搜索
@@ -143,8 +146,50 @@ async def search_stocks(
     if industry:
         query = query.filter(StockInfo.industry == industry)
     
-    stocks = query.limit(limit).all()
-    return stocks
+    local_stocks = query.limit(limit).all()
+    
+    # 2. 如果本地没有结果且允许自动获取，则从外部API搜索
+    if not local_stocks and auto_fetch:
+        try:
+            from app.services.stock_service import stock_service
+            
+            async with stock_service:
+                external_results = await stock_service.search_stocks_from_api(q, limit)
+                
+                # 将外部结果转换并保存到数据库
+                for result in external_results:
+                    try:
+                        # 检查是否已存在
+                        existing = db.query(StockInfo).filter(StockInfo.code == result['code']).first()
+                        if not existing:
+                            # 获取完整股票信息
+                            stock_detail = await stock_service.fetch_stock_info(result['code'])
+                            if stock_detail:
+                                new_stock = StockInfo(
+                                    code=stock_detail['code'],
+                                    name=stock_detail['name'],
+                                    market=stock_detail['market'],
+                                    industry=stock_detail.get('industry'),
+                                    sector=stock_detail.get('sector'),
+                                    listing_date=stock_detail.get('listing_date'),
+                                    total_shares=stock_detail.get('total_shares'),
+                                    market_cap=stock_detail.get('market_cap'),
+                                    is_active=True
+                                )
+                                db.add(new_stock)
+                                db.commit()
+                                db.refresh(new_stock)
+                                local_stocks.append(new_stock)
+                    except Exception as e:
+                        # 单个股票添加失败不影响其他
+                        print(f"添加股票 {result['code']} 失败: {e}")
+                        continue
+                        
+        except Exception as e:
+            # 外部API调用失败，返回空结果但不报错
+            print(f"外部API搜索失败: {e}")
+    
+    return local_stocks
 
 @router.get("/info/{stock_code}", response_model=StockInfoResponse)
 @require_permission(Permissions.VIEW_STOCKS)
@@ -291,7 +336,8 @@ async def add_to_watchlist(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """添加股票到自选股"""
+    """添加股票到自选股 - 如果股票不存在会自动从外部API获取"""
+    
     # 检查股票是否存在
     stock = db.query(StockInfo).filter(
         and_(
@@ -300,10 +346,40 @@ async def add_to_watchlist(
         )
     ).first()
     
+    # 如果股票不存在，尝试从外部API获取
+    if not stock:
+        try:
+            from app.services.stock_service import stock_service
+            
+            async with stock_service:
+                # 获取股票详细信息
+                stock_detail = await stock_service.fetch_stock_info(watchlist_data.stock_code)
+                
+                if stock_detail:
+                    # 创建新的股票记录
+                    stock = StockInfo(
+                        code=stock_detail['code'],
+                        name=stock_detail['name'],
+                        market=stock_detail['market'],
+                        industry=stock_detail.get('industry'),
+                        sector=stock_detail.get('sector'),
+                        listing_date=stock_detail.get('listing_date'),
+                        total_shares=stock_detail.get('total_shares'),
+                        market_cap=stock_detail.get('market_cap'),
+                        is_active=True
+                    )
+                    db.add(stock)
+                    db.commit()
+                    db.refresh(stock)
+                    
+        except Exception as e:
+            print(f"从外部API获取股票信息失败: {e}")
+    
+    # 如果仍然没有找到股票
     if not stock:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="股票不存在"
+            detail="股票不存在或无法获取股票信息"
         )
     
     # 检查是否已在自选股中

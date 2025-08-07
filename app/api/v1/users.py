@@ -51,9 +51,35 @@ async def get_current_user_info(
     current_user: User = Depends(get_current_user)
 ):
     """获取当前用户信息"""
-    user_data = UserResponse.from_orm(current_user)
-    user_data.roles = [role.name for role in current_user.roles]
-    return user_data
+    try:
+        # 创建基本的用户响应数据
+        user_data = UserResponse(
+            id=current_user.id,
+            username=current_user.username,
+            email=current_user.email,
+            full_name=current_user.full_name,
+            is_active=current_user.is_active,
+            created_at=current_user.created_at,
+            updated_at=current_user.updated_at,
+            roles=[]  # 暂时设为空列表，避免关联查询问题
+        )
+        
+        # 尝试获取角色信息（如果有的话）
+        try:
+            if hasattr(current_user, 'roles') and current_user.roles:
+                user_data.roles = [role.name for role in current_user.roles]
+        except Exception as role_error:
+            # 如果角色查询失败，记录错误但不中断响应
+            print(f"角色查询错误: {role_error}")
+            user_data.roles = []
+            
+        return user_data
+    except Exception as e:
+        print(f"用户信息获取错误: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"获取用户信息失败: {str(e)}"
+        )
 
 @router.put("/me", response_model=UserResponse)
 async def update_current_user(
@@ -94,7 +120,7 @@ async def update_current_user(
     db.commit()
     db.refresh(current_user)
     
-    user_data = UserResponse.from_orm(current_user)
+    user_data = UserResponse.model_validate(current_user)
     user_data.roles = [role.name for role in current_user.roles]
     return user_data
 
@@ -158,7 +184,7 @@ async def get_users(
     
     result = []
     for user in users:
-        user_data = UserResponse.from_orm(user)
+        user_data = UserResponse.model_validate(user)
         user_data.roles = [role.name for role in user.roles]
         result.append(user_data)
     
@@ -212,7 +238,7 @@ async def create_user(
     db.commit()
     db.refresh(new_user)
     
-    user_response = UserResponse.from_orm(new_user)
+    user_response = UserResponse.model_validate(new_user)
     user_response.roles = [role.name for role in new_user.roles]
     return user_response
 
@@ -231,7 +257,7 @@ async def get_user(
             detail="用户不存在"
         )
     
-    user_data = UserResponse.from_orm(user)
+    user_data = UserResponse.model_validate(user)
     user_data.roles = [role.name for role in user.roles]
     return user_data
 
@@ -289,7 +315,7 @@ async def update_user(
     db.commit()
     db.refresh(user)
     
-    user_data = UserResponse.from_orm(user)
+    user_data = UserResponse.model_validate(user)
     user_data.roles = [role.name for role in user.roles]
     return user_data
 

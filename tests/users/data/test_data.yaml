@@ -1,17 +1,68 @@
-# 用户管理模块基本测试数据
+# 用户管理模块测试数据
+
+api_endpoints:
+  base_url: "http://localhost:8000"
+  user_profile: "/api/v1/users/me"
+  user_list: "/api/v1/users/"
+  user_update: "/api/v1/users/me"
+
+# 测试用户凭证
+auth_credentials:
+  username: "admin"
+  password: "admin123"
+
+# 用户资料测试数据
 user_profile_test_data:
   expected_fields:
     - "username"
     - "email"
     - "is_active"
     - "id"
+    - "full_name"
+    - "created_at"
+    - "updated_at"
+    - "roles"
 
+# 用户列表测试数据
 user_list_test_data:
   default_params:
     page: 1
     size: 10
+  expected_fields:
+    - "id"
+    - "username"
+    - "email"
+    - "is_active"
+    - "created_at"
 
+# 用户更新测试数据
+user_update_test_data:
+  valid_updates:
+    - field: "full_name"
+      value: "测试用户全名"
+      expected_status: 200
+    - field: "email"
+      value: "newemail@example.com"
+      expected_status: 200
+  invalid_updates:
+    - field: "email"
+      value: "invalid-email"
+      expected_status: 422
+
+# 角色测试数据
 roles_test_data:
   expected_roles:
     - "admin"
     - "user"
+  role_permissions:
+    admin:
+      - "user.create"
+      - "user.read"
+      - "user.update"
+      - "user.delete"
+      - "stock.read"
+      - "stock.watchlist"
+    user:
+      - "user.read"
+      - "stock.read"
+      - "stock.watchlist"

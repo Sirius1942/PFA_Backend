@@ -59,44 +59,37 @@ class StockDataService:
                     headers=headers
                 )
             
-            # 确定市场代码
-            market_code = self._get_market_code(stock_code)
+            # 使用搜索API获取股票信息，因为它更稳定
+            search_results = await self.search_stocks_from_api(stock_code, 10)
             
-            # 东方财富股票详情API
-            url = f"{self.quote_url}/api/qt/stock/get"
-            params = {
-                "secid": f"{market_code}.{stock_code}",
-                "fltt": "2",
-                "fields": "f57,f58,f84,f85,f87,f169,f170,f116,f117,f86"
-            }
+            # 找到精确匹配的股票代码
+            target_stock = None
+            for stock in search_results:
+                if stock['code'] == stock_code:
+                    # 优先选择主板股票（market为1或0）
+                    if str(stock['market']) in ['1', '0']:
+                        target_stock = stock
+                        break
+                    elif target_stock is None:
+                        target_stock = stock
             
-            async with self.session.get(url, params=params) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    if data.get("rc") == 0 and data.get("data"):
-                        stock_data = data["data"]
-                        
-                        # 获取股票名称
-                        name_url = f"{self.search_url}/api/suggest/get"
-                        name_params = {"input": stock_code, "type": "14", "token": "D43BF722C8E33BDC906FB84D85E326E8", "count": "1"}
-                        async with self.session.get(name_url, params=name_params) as name_response:
-                            name_data = await name_response.json()
-                            stock_name = stock_code
-                            if name_data.get("QuotationCodeTable", {}).get("Data"):
-                                stock_name = name_data["QuotationCodeTable"]["Data"][0]["Name"]
-                        
-                        return {
-                            "code": stock_code,
-                            "name": stock_name,
-                            "market": "SH" if market_code == "1" else "SZ",
-                            "industry": None,  # 需要单独获取
-                            "sector": None,
-                            "listing_date": None,
-                            "total_shares": stock_data.get("f84"),  # 总股本
-                            "market_cap": stock_data.get("f116")   # 总市值
-                        }
+            if target_stock:
+                # 确定市场
+                market_map = {'1': 'SH', '0': 'SZ', '90': 'BJ'}
+                market = market_map.get(str(target_stock['market']), 'SZ')
+                
+                return {
+                    "code": stock_code,
+                    "name": target_stock['name'],
+                    "market": market,
+                    "industry": None,  # 暂时不获取详细行业信息
+                    "sector": None,
+                    "listing_date": None,
+                    "total_shares": None,
+                    "market_cap": None
+                }
             
-            logger.warning(f"未能获取股票信息: {stock_code}")
+            logger.warning(f"未能从搜索结果中找到股票: {stock_code}")
             return None
             
         except Exception as e:

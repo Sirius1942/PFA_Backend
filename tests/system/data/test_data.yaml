@@ -1,4 +1,21 @@
-# 系统集成模块基本测试数据
+# 系统模块测试数据
+
+api_endpoints:
+  base_url: "http://localhost:8000"
+  health: "/health"
+  api_info: "/api"
+  system_status: "/api/v1/system/status"
+  system_config: "/api/v1/system/config"
+  docs: "/docs"
+  redoc: "/redoc"
+  openapi: "/openapi.json"
+
+# 测试用户凭证
+auth_credentials:
+  username: "admin"
+  password: "admin123"
+
+# 健康检查测试数据
 health_check_test_data:
   endpoints:
     - path: "/health"
@@ -6,15 +23,52 @@ health_check_test_data:
       expected_fields:
         - "status"
         - "service"
-    - path: "/"
+        - "version"
+      expected_values:
+        status: "healthy"
+        service: "private-financial-analyst"
+    - path: "/api"
       expected_status: 200
+      expected_fields:
+        - "message"
+        - "version"
+        - "docs"
+        - "status"
 
+# API文档测试数据
 api_docs_test_data:
   endpoints:
-    - "/docs"
-    - "/redoc"
-    - "/openapi.json"
+    - path: "/docs"
+      expected_status: 200
+      content_type: "text/html"
+    - path: "/redoc"
+      expected_status: 200
+      content_type: "text/html"
+    - path: "/openapi.json"
+      expected_status: 200
+      content_type: "application/json"
 
+# 系统状态测试数据
+system_status_test_data:
+  expected_fields:
+    - "database_status"
+    - "total_users"
+    - "total_stocks"
+    - "total_watchlist_items"
+    - "system_uptime"
+    - "memory_usage"
+    - "disk_usage"
+
+# 系统配置测试数据
+system_config_test_data:
+  expected_fields:
+    - "app_name"
+    - "version"
+    - "debug_mode"
+    - "max_users"
+    - "data_retention_days"
+
+# 数据库连接测试数据
 database_test_data:
   connection_config:
     host: "localhost"

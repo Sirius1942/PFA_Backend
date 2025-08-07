@@ -13,7 +13,7 @@ from .stocks import router as stocks_router
 from .assistant import router as assistant_router
 from .data_collection import router as data_collection_router
 from .system import router as system_router
-from .frontend import router as frontend_router
+
 # from .admin import router as admin_router
 
 # 创建主路由
@@ -61,9 +61,3 @@ api_router.include_router(
 #     tags=["系统管理"]
 # )
 
-# 前端页面路由（独立的路由器，不包含在api_router中）
-frontend_page_router = APIRouter()
-frontend_page_router.include_router(
-    frontend_router,
-    tags=["前端页面"]
-)

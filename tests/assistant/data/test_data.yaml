@@ -1,16 +1,49 @@
-# AI助手模块基本测试数据
-chat_test_data:
-  basic_message: "你好"
-  stock_query: "查询股票002379的基本信息"
+# AI助手模块测试数据
 
-analysis_test_data:
-  test_stock_code: "002379"
-  analysis_type: "technical"
+api_endpoints:
+  base_url: "http://localhost:8000"
+  chat: "/api/v1/assistant/chat"
+  history: "/api/v1/assistant/history"
 
-insights_test_data:
-  insight_type: "daily_summary"
+# 测试用户凭证
+auth_credentials:
+  username: "admin"
+  password: "admin123"
 
-history_test_data:
-  default_params:
-    page: 1
-    size: 10
+# 聊天测试数据
+chat_test_scenarios:
+  - name: "simple_greeting"
+    message: "你好"
+    expected_status: 200
+    description: "简单问候"
+    should_have_response: true
+  - name: "stock_analysis_question"
+    message: "请分析一下000001平安银行的投资价值"
+    stock_code: "000001"
+    expected_status: 200
+    description: "股票分析问题"
+    should_have_response: true
+  - name: "general_financial_question"
+    message: "什么是价值投资?"
+    expected_status: 200
+    description: "一般金融问题"
+    should_have_response: true
+  - name: "empty_message"
+    message: ""
+    expected_status: 422
+    description: "空消息"
+    should_have_response: false
+
+# 期望的响应字段
+expected_response_fields:
+  - "message"
+  - "timestamp"
+
+# 聊天历史测试数据
+chat_history_test_data:
+  expected_fields:
+    - "id"
+    - "message"
+    - "response"
+    - "timestamp"
+    - "user_id"

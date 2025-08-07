@@ -1,28 +1,131 @@
-# 股票模块基本测试数据
-stock_info_test_data:
-  test_stock_code: "002379"
+# 股票模块测试数据
+
+api_endpoints:
+  base_url: "http://localhost:8000"
+  info: "/api/v1/stocks/info/{stock_code}"
+  search: "/api/v1/stocks/search"
+  realtime: "/api/v1/stocks/realtime/{stock_code}"
+  kline: "/api/v1/stocks/kline/{stock_code}"
+  watchlist: "/api/v1/stocks/watchlist"
+  watchlist_item: "/api/v1/stocks/watchlist/{stock_code}"
+  dashboard: "/api/v1/stocks/dashboard"
+
+# 测试用户凭证
+auth_credentials:
+  username: "admin"
+  password: "admin123"
+
+# 测试股票数据
+test_stocks:
+  valid_stocks:
+    - code: "000001"
+      name: "平安银行"
+      market: "SZ"
+    - code: "600036"
+      name: "招商银行"  
+      market: "SH"
+    - code: "600519"
+      name: "贵州茅台"
+      market: "SH"
+  invalid_stocks:
+    - code: "999999"
+      expected_status: 404
+
+# 搜索测试数据
+search_test_data:
+  test_queries:
+    - "002379"
+    - "鲁大师"
+    - "600036"
+    - "招商银行"
   expected_fields:
     - "code"
     - "name"
+    - "market"
 
-search_test_data:
-  test_query: "002379"
-
+# 实时行情测试数据
 realtime_test_data:
-  test_stock_code: "002379"
+  test_stock_codes:
+    - "002379"
+    - "600036"
   expected_fields:
+    - "code"
     - "current_price"
-    - "timestamp"
+    - "change_amount"
+    - "change_percent"
+    - "volume"
+    - "amount"
+    - "quote_time"
 
-kline_test_data:
-  test_stock_code: "002379"
-  default_params:
+# K线数据测试场景
+kline_scenarios:
+  - name: "000001日K线数据"
+    stock_code: "000001"
     period: "1d"
     limit: 30
+    expected_status: 200
+  - name: "600036周K线数据"
+    stock_code: "600036"
+    period: "1w"
+    limit: 20
+    expected_status: 200
+
+# 自选股测试数据
+watchlist_test_data:
+  test_operations:
+    - action: "add"
+      stock_code: "000001"
+      notes: "测试股票备注"
+      expected_status: [200, 201]
+    - action: "list"
+      expected_status: 200
+    - action: "update"
+      stock_code: "000001"
+      notes: "更新的备注"
+      expected_status: 200
+    - action: "delete"
+      stock_code: "000001"
+      expected_status: 200
+
+# 自选股CRUD完整测试场景
+watchlist_crud_scenarios:
+  - name: "完整自选股CRUD流程测试"
+    test_stock_code: "600519"
+    add_data:
+      stock_code: "600519"
+      notes: "CRUD测试 - 贵州茅台"
+    update_data:
+      notes: "CRUD测试完成 - 贵州茅台股份有限公司"
+    expected_add_status: [200, 201, 400]  # 400表示已存在
+    expected_update_status: 200
+    expected_delete_status: 200
+    expected_list_status: 200
+
+# 股票搜索增强测试场景
+search_scenarios:
+  - name: "搜索平安银行"
+    query: "平安银行"
+    expected_status: 200
+    expected_min_results: 1
+  - name: "搜索股票代码000001"
+    query: "000001" 
+    expected_status: 200
+    expected_min_results: 1
+  - name: "搜索招商银行"
+    query: "招商银行"
+    expected_status: 200
+    expected_min_results: 1
+  - name: "搜索股票代码600036"
+    query: "600036"
+    expected_status: 200
+    expected_min_results: 1
+  - name: "空查询"
+    expected_status: 422  # 参数验证错误
+
+# 看板数据测试
+dashboard_test_data:
   expected_fields:
-    - "timestamp"
-    - "open"
-    - "high"
-    - "low"
-    - "close"
-    - "volume"
+    - "user_id"
+    - "watchlist_stocks"
+    - "market_summary"
+    - "last_updated"

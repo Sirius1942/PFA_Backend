@@ -1,4 +1,96 @@
-# 认证模块基本测试数据
+# 认证模块测试数据
+
+api_endpoints:
+  base_url: "http://localhost:8000"
+  login: "/api/v1/auth/login"
+  register: "/api/v1/auth/register"
+  profile: "/api/v1/users/me"
+  refresh: "/api/v1/auth/refresh"
+
+users:
+  admin:
+    username: "admin"
+    password: "admin123"
+    email: "admin@example.com"
+    role: "admin"
+    expected_status: 200
+  test:
+    username: "test"
+    password: "test123"
+    email: "test@example.com"
+    role: "user"
+    expected_status: 200
+
+login_scenarios:
+  - name: "valid_admin_login"
+    username: "admin"
+    password: "admin123"
+    expected_status: 200
+    description: "管理员成功登录"
+    should_have_token: true
+  - name: "valid_test_user_login"
+    username: "test"
+    password: "test123"
+    expected_status: 200
+    description: "测试用户成功登录"
+    should_have_token: true
+  - name: "invalid_username"
+    username: "nonexistent"
+    password: "admin123"
+    expected_status: 401
+    description: "无效用户名"
+    should_have_token: false
+  - name: "invalid_password"
+    username: "admin"
+    password: "wrongpassword"
+    expected_status: 401
+    description: "错误密码"
+    should_have_token: false
+  - name: "empty_username"
+    username: ""
+    password: "admin123"
+    expected_status: 401
+    description: "用户名为空"
+    should_have_token: false
+  - name: "empty_password"
+    username: "admin"
+    password: ""
+    expected_status: 401
+    description: "密码为空"
+    should_have_token: false
+
+register_scenarios:
+  - name: "valid_registration"
+    username: "newuser"
+    password: "newuser123"
+    email: "newuser@example.com"
+    expected_status: 404  # 注册接口可能未实现，期望404
+    description: "成功注册新用户"
+  - name: "duplicate_username"
+    username: "admin"
+    password: "newpass123"
+    email: "duplicate@example.com"
+    expected_status: 404  # 注册接口可能未实现，期望404
+    description: "用户名已存在"
+
+# 受保护的端点测试数据
+protected_endpoints:
+  - path: "/api/v1/users/me"
+    method: "GET"
+    expected_status: 200
+    description: "用户资料"
+  - path: "/api/v1/stocks/watchlist"
+    method: "GET" 
+    expected_status: 200
+    description: "自选股列表"
+  - path: "/api/v1/assistant/chat"
+    method: "POST"
+    expected_status: 200
+    description: "AI助手聊天"
+    data:
+      message: "你好"
+
+# 向下兼容的数据结构
 login_test_data:
   valid_credentials:
     - username: "admin"

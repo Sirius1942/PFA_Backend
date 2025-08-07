@@ -104,8 +104,9 @@ async def get_current_superuser(
 
 
 def get_optional_current_user(
-    token: Optional[str] = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
+    request: Request,
+    db: Session = Depends(get_db),
+    token: Optional[str] = Depends(get_token_from_cookie_or_header)
 ) -> Optional[User]:
     """
     获取可选的当前用户（用于可选认证的接口）
@@ -119,11 +120,11 @@ def get_optional_current_user(
             settings.SECRET_KEY, 
             algorithms=[settings.ALGORITHM]
         )
-        username: str = payload.get("sub")
-        if username is None:
+        user_id: str = payload.get("sub")
+        if user_id is None:
             return None
             
-        user = user_service.get_user_by_username(db, username=username)
+        user = user_service.get_user_by_id(db, user_id=int(user_id))
         if user and user.is_active:
             return user
     except JWTError:
