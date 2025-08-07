@@ -35,6 +35,14 @@ async def get_current_user_optional(
     except HTTPException:
         return None
 
+@router.get("/", response_class=HTMLResponse, summary="首页")
+async def root(current_user: Optional[User] = Depends(get_current_user_optional)):
+    """首页重定向"""
+    if current_user:
+        return RedirectResponse(url="/dashboard", status_code=302)
+    else:
+        return RedirectResponse(url="/login", status_code=302)
+
 @router.get("/dashboard", response_class=HTMLResponse, summary="仪表板页面")
 async def dashboard(request: Request, current_user: User = Depends(get_current_user)):
     """显示用户仪表板"""
